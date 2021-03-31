@@ -6,12 +6,14 @@ C.Brown & C.Savard 07/2020
 
 #include "L1Trigger/TrackTrigger/interface/TrackQuality.h"
 #include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
+#include "L1Trigger/TrackFindingTracklet/interface/Util.h"
 
 //Constructors
 
-TrackQuality::TrackQuality() {}
+//TrackQuality::TrackQuality() {}
 
-TrackQuality::TrackQuality(const edm::ParameterSet& qualityParams) {
+TrackQuality::TrackQuality(const edm::ParameterSet& qualityParams, const bool printMem, const std::string memPath)
+    : printMem_(printMem), memPath_(memPath) {
   std::string AlgorithmString = qualityParams.getParameter<std::string>("qualityAlgorithm");
   // Unpacks EDM parameter set itself to save unecessary processing within TrackProducers
   if (AlgorithmString == "Cut") {
@@ -30,6 +32,11 @@ TrackQuality::TrackQuality(const edm::ParameterSet& qualityParams) {
                  qualityParams.getParameter<std::string>("ONNXInputName"),
                  qualityParams.getParameter<std::vector<std::string>>("featureNames"));
     ONNXInvRScaling_ = qualityParams.getParameter<double>("ONNXInvRScale");
+  }
+
+  if (printMem_) {
+    TrackQuality::printMem(true);
+    HLSscalefactor_ = qualityParams.getParameter<int>("HLSScaleFactor");
   }
 }
 
@@ -208,6 +215,22 @@ std::vector<float> TrackQuality::featureTransform(TTTrack<Ref_Phase2TrackerDigi_
   for (const std::string& feature : featureNames)
     transformedFeatures.push_back(feature_map[feature]);
 
+  if (printMem_) {
+    std::vector<int> temp_trk;
+    temp_trk.push_back(aTrack.get_RinvBits());
+    temp_trk.push_back(aTrack.get_phiBits());
+    temp_trk.push_back(aTrack.get_tanlBits());
+    temp_trk.push_back(aTrack.get_z0Bits());
+    temp_trk.push_back(aTrack.get_d0Bits());
+    temp_trk.push_back(aTrack.get_chi2XYBits());
+    temp_trk.push_back(aTrack.get_chi2ZBits());
+    temp_trk.push_back(aTrack.get_BendChi2Bits());
+    temp_trk.push_back(aTrack.get_hitPattern());
+
+    Tracks_.push_back(temp_trk);
+    TransformedTracks_.push_back(transformedFeatures);
+  }
+
   return transformedFeatures;
 }
 
@@ -302,4 +325,72 @@ void TrackQuality::setONNXModel(std::string const& AlgorithmString,
   ONNXmodel_ = ONNXmodel;
   ONNXInputName_ = ONNXInputName;
   featureNames_ = featureNames;
+}
+
+void TrackQuality::printMem(bool first) {
+  int event_;
+  std::ofstream out_;
+
+  const std::string dirFT = memPath_ + "TrackQuality/";
+
+  std::ostringstream osTracks;
+  osTracks << dirFT << "TrackQuality_Tracks.dat";
+  auto const& fTrackname = osTracks.str();
+
+  std::ostringstream osFeatures;
+  osFeatures << dirFT << "TrackQuality_Features.dat";
+  auto const& fFeatname = osFeatures.str();
+
+  if (first) {
+    event_ = 1;
+
+    if (not std::filesystem::exists(dirFT)) {
+      int fail = system((std::string("mkdir -p ") + dirFT).c_str());
+      if (fail)
+        throw cms::Exception("BadDir") << __FILE__ << " " << __LINE__ << " could not create directory " << dirFT;
+    }
+
+    out_.open(fTrackname);
+    if (out_.fail())
+      throw cms::Exception("BadFile") << __FILE__ << " " << __LINE__ << " could not create file " << fTrackname;
+    out_.close();
+
+    out_.open(fTrackname);
+    if (out_.fail())
+      throw cms::Exception("BadFile") << __FILE__ << " " << __LINE__ << " could not create file " << fTrackname;
+    out_.close();
+
+  } else {
+    out_.open(fTrackname, std::ofstream::app);
+
+    out_ << " Event : " << event_ << "\n";
+
+    for (unsigned int j = 0; j < Tracks_.size(); j++) {
+      out_ << "0x";
+      out_ << std::setfill('0') << std::setw(2);
+      out_ << std::hex << j << std::dec << " ";
+      for (unsigned int k = 0; k < Tracks_[j].size(); k++)
+        out_ << Tracks_[j][k] << " ";
+      out_ << "\n";
+    }
+    out_.close();
+    Tracks_.clear();
+
+    out_.open(fFeatname, std::ofstream::app);
+
+    out_ << " Event : " << event_ << "\n";
+
+    for (unsigned int j = 0; j < TransformedTracks_.size(); j++) {
+      out_ << "0x";
+      out_ << std::setfill('0') << std::setw(2);
+      out_ << std::hex << j << std::dec << " ";
+      for (unsigned int k = 0; k < TransformedTracks_[j].size(); k++)
+        out_ << (int)(HLSscalefactor_ * TransformedTracks_[j][k]) << " ";
+      out_ << "\n";
+    }
+    out_.close();
+    TransformedTracks_.clear();
+
+    event_++;
+  }
 }

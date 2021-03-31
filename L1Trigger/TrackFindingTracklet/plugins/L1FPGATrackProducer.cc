@@ -293,7 +293,8 @@ L1FPGATrackProducer::L1FPGATrackProducer(edm::ParameterSet const& iConfig)
 
   trackQuality_ = iConfig.getParameter<bool>("TrackQuality");
   if (trackQuality_) {
-    trackQualityModel_ = std::make_unique<TrackQuality>(iConfig.getParameter<edm::ParameterSet>("TrackQualityPSet"));
+    trackQualityModel_ = std::make_unique<TrackQuality>(
+        iConfig.getParameter<edm::ParameterSet>("TrackQualityPSet"), settings.writeMem(), settings.memPath());
   }
 }
 
@@ -706,6 +707,10 @@ void L1FPGATrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
     //aTrack.testTrackWordBits();
 
     L1TkTracksForOutput->push_back(aTrack);
+  }
+
+  if (trackQuality_ && settings.writeMem()) {
+    trackQualityModel_->printMem(false);
   }
 
   iEvent.put(std::move(L1TkTracksForOutput), "Level1TTTracks");

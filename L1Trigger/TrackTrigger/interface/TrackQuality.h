@@ -12,6 +12,10 @@ C.Brown 28/07/20
 #include <vector>
 #include <memory>
 #include <string>
+#include <fstream>
+#include <sstream>
+#include <cassert>
+#include <bitset>
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/EventSetup.h"
@@ -26,6 +30,8 @@ C.Brown 28/07/20
 #include "DataFormats/L1TrackTrigger/interface/TTTrack.h"
 #include "DataFormats/L1TrackTrigger/interface/TTTypes.h"
 
+#include "L1Trigger/TrackFindingTracklet/interface/Settings.h"
+
 class TrackQuality {
 public:
   // Enum class used for determining prediction behaviour in setTrackQuality
@@ -34,7 +40,7 @@ public:
   //Default Constructor
   TrackQuality();
 
-  TrackQuality(const edm::ParameterSet& qualityParams);
+  TrackQuality(const edm::ParameterSet& qualityParams, const bool printMem, const std::string memPath);
 
   //Default Destructor
   ~TrackQuality() = default;
@@ -60,6 +66,8 @@ public:
                     std::string const& ONNXInputName,
                     std::vector<std::string> const& featureNames);
 
+  void printMem(bool first);
+
 private:
   // Private Member Data
   QualityAlgorithm qualityAlgorithm_ = QualityAlgorithm::None;
@@ -73,5 +81,13 @@ private:
   float minPt_;
   int nStubsmin_;
   float ONNXInvRScaling_;
+
+  std::vector<std::vector<float>> TransformedTracks_;
+  std::vector<std::vector<int>> Tracks_;
+
+  //Writing Mem files, avoiding passing entire trklet settings class
+  bool printMem_;
+  std::string memPath_;
+  int HLSscalefactor_;
 };
 #endif

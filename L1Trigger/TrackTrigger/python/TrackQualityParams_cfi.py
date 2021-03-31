@@ -17,5 +17,7 @@ TrackQualityParams = cms.PSet(qualityAlgorithm = cms.string("GBDT"), #None, Cut,
                               minPt = cms.double( 2. ),       # in GeV
                               nStubsmin = cms.int32( 4 ),
                               
-                              ONNXInvRScale = cms.double(500)  # Scaling InvR to same order of magnitude as other variables for ML models
+                              ONNXInvRScale = cms.double(500),  # Scaling InvR to same order of magnitude as other variables for ML models
+
+                              HLSScaleFactor = cms.int32(4)
                               )
