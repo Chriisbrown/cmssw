@@ -15,6 +15,8 @@
 #include "L1Trigger/VertexFinder/interface/AlgoSettings.h"
 #include "L1Trigger/VertexFinder/interface/RecoVertex.h"
 #include "L1Trigger/VertexFinder/interface/VertexFinder.h"
+#include "SimTracker/TrackTriggerAssociation/interface/TTTrackAssociationMap.h"
+#include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
 
 #include <iostream>
 #include <map>
@@ -40,6 +42,14 @@ private:
   const edm::EDGetTokenT<TTTrackCollectionView> l1TracksToken_;
   const edm::ESGetToken<TrackerTopology, TrackerTopologyRcd> trackerTopologyToken_;
   const std::string outputCollectionName_;
+  const edm::EDGetTokenT<TTTrackAssociationMap< Ref_Phase2TrackerDigi_ > > ttTrackMCTruthToken_;
+
+  tensorflow::GraphDef* cnnAssGraph_;
+  tensorflow::Session* cnnAssSesh_;
+  tensorflow::GraphDef* cnnTrkGraph_;
+  tensorflow::Session* cnnTrkSesh_;
+  tensorflow::GraphDef* cnnPVZ0Graph_;
+  tensorflow::Session* cnnPVZ0Sesh_;
 
   l1tVertexFinder::AlgoSettings settings_;
 };

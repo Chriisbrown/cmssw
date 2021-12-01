@@ -15,6 +15,7 @@
 <use name="SimDataFormats/TrackingAnalysis"/>
 <use name="SimGeneral/TrackingAnalysis"/>
 <use name="SimTracker/TrackTriggerAssociation"/>
+<use name="PhysicsTools/TensorFlow" />
 <use name="boost"/>
 <use name="roothistmatrix"/>
 <flags CXXFLAGS="-g -Wno-unused-variable -Wno-misleading-indentation"/>

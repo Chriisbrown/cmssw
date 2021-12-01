@@ -34,10 +34,22 @@ from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic', '')
 
 ############################################################
+# message logger
+############################################################
+
+# process.load("FWCore.MessageLogger.MessageLogger_cfi")
+# process.MessageLogger = cms.Service("MessageLogger",
+#     destinations   = cms.untracked.vstring('detailedInfo','critical','cout','cerr'),
+#     critical = cms.untracked.PSet(threshold = cms.untracked.string('ERROR')),
+#     detailedInfo = cms.untracked.PSet(threshold  = cms.untracked.string('INFO')),
+#     cerr = cms.untracked.PSet(threshold  = cms.untracked.string('WARNING'))
+# )
+
+############################################################
 # input and output
 ############################################################
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(20))
 
 readFiles = cms.untracked.vstring(
     '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/F7BF4AED-51F1-9D47-B86D-6C3DDA134AB9.root'
@@ -51,7 +63,7 @@ process.source = cms.Source ("PoolSource",
                             )
 
 
-process.TFileService = cms.Service("TFileService", fileName = cms.string('CheckingJets_CMSSW11_CMS.root'), closeFileFast = cms.untracked.bool(True))
+process.TFileService = cms.Service("TFileService", fileName = cms.string('L1TObjNtuple_TTbar_CNN.root'), closeFileFast = cms.untracked.bool(True))
 
 
 ############################################################

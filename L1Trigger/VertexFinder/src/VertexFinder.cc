@@ -1,4 +1,5 @@
 #include "L1Trigger/VertexFinder/interface/VertexFinder.h"
+#include "CLHEP/Random/RandGauss.h"
 
 using namespace std;
 
@@ -608,6 +609,23 @@ namespace l1tVertexFinder {
     }
   }
 
+  void VertexFinder::Generator(std::vector<const L1Track*>& pvTracks) {
+    RecoVertex genPV;
+    float sumz0 = 0.;
+    float smear = settings_->vx_smear();
+    cout << "L1T Vertexing: Smearing generator vertex with resolution of " << smear << endl;
+
+    for (const L1Track* track : pvTracks) {
+      sumz0 += track->z0();
+      genPV.insert(track);
+    }
+    float avrgz0 = sumz0 / (pvTracks.size());
+    float smearedz0 = (float)CLHEP::RandGauss::shoot(avrgz0, smear);
+    //std::cout << "Gen z0 = " << avrgz0 << ", smear = " << smearedz0 << std::endl;
+    genPV.setZ0(smearedz0);
+    vertices_.push_back(genPV);
+  }
+
   void VertexFinder::FastHistoLooseAssociation() {
     float vxPt = 0.;
     RecoVertex leading_vertex;
@@ -1073,5 +1091,194 @@ namespace l1tVertexFinder {
     }
     pvIndex_ = 0;
   }  // end of FastHistoEmulation
+
+  void VertexFinder::CNNPVZ0Algorithm(tensorflow::Session* cnnTrkSesh, tensorflow::Session* cnnPVZ0Sesh, tensorflow::Session* cnnAssSesh) {
+    // Weight Tracks:
+    // Loop over tracks -> weight the network -> set track weights
+    tensorflow::Tensor inputTrkWeight(tensorflow::DT_FLOAT, {1, 10});
+    for (auto& track : fitTracks_) {
+      // Fill tensor with track params
+      inputTrkWeight.tensor<float, 2>()(0, 0) = float(track.z0());
+      inputTrkWeight.tensor<float, 2>()(0, 1) = float(track.pt());
+      inputTrkWeight.tensor<float, 2>()(0, 2) = float(abs(track.eta()));
+      inputTrkWeight.tensor<float, 2>()(0, 3) = float(track.chi2dof());
+      inputTrkWeight.tensor<float, 2>()(0, 4) = float(track.bendchi2());
+      inputTrkWeight.tensor<float, 2>()(0, 5) = float(track.getNumStubs());
+      inputTrkWeight.tensor<float, 2>()(0, 6) = float(0);
+      inputTrkWeight.tensor<float, 2>()(0, 7) = float(0);
+      inputTrkWeight.tensor<float, 2>()(0, 8) = float(0);
+      inputTrkWeight.tensor<float, 2>()(0, 9) = float(0);
+      // CNN output: track weight
+      std::vector<tensorflow::Tensor> outputTrkWeight;
+      tensorflow::run(cnnTrkSesh, {{"track_input", inputTrkWeight}}, {"weights_output"}, &outputTrkWeight);
+      // Set track weight
+      track.setWeight(outputTrkWeight[0].tensor<float, 2>()(0, 0));
+      // cout << "outputTrkWeight[0].tensor<float, 2>()(0, 0): " << outputTrkWeight[0].tensor<float, 2>()(0, 0) << endl;
+    }
+
+    // Find Vertices:
+    // define a tensor and fill it with track parameters
+    tensorflow::Tensor inputPV(tensorflow::DT_FLOAT, {1, 256, 1});
+    std::vector<tensorflow::Tensor> outputPV;
+    // RecoVertex pv;
+    RecoVertexCollection vertices(256.);
+    // std::map<float, std::shared_ptr<l1tVertexFinder::RecoVertex>> vertexMap; //BRS: Would be nice to do this: but not working yet
+    // std::map<float, float> vertexMap;
+    // std::map<int, float> vertexMap;
+    std::map<float, int> vertexMap;
+
+    float pvWeight = 0.;
+    float pvZ = -999.;
+    float binWidth = 30./256.;
+    for (float z = -15; z < 15.; z += binWidth) {
+      int zbin = (int)((z + 15.)/binWidth);
+      float vxWeight = 0;
+      for (const L1Track& track : fitTracks_) {
+        if (track.z0() >= z && track.z0() < (z + binWidth)) {
+          vertices.at(zbin).insert(&track);
+          vxWeight += track.weight();
+        }
+      }
+      vertices.at(zbin).setZ0(z);
+      // vertexMap[vxWeight]=&vertices.at(zbin);
+      // vertexMap[z+binWidth/2.]=vxWeight;
+      // vertexMap[zbin]=vxWeight;
+      vertexMap[vxWeight]=zbin; //BRS: Warning: rare chance to have exactly the same floating key?
+      inputPV.tensor<float, 3>()(0, zbin, 0) = vxWeight;
+      if (vxWeight > pvWeight) {
+        pvWeight = vxWeight;
+        pvZ = z;
+      }
+    }
+
+    // Run PV Network:
+    tensorflow::run(cnnPVZ0Sesh, {{"hists_input", inputPV}}, {"pv_position_output"}, &outputPV);
+    // tdr_vertex_.setZ(pvZ);
+    // pv.setZ0(pvZ);
+    // vertices_.emplace_back(pv);
+    cout << " pvZ = " << pvZ
+          << " pvWeight = " << pvWeight
+          << " cnn z " << outputPV[0].tensor<float, 2>()(0, 0) 
+          // << " cnn z " << outputPV[1].tensor<float, 2>()(0, 0) 
+          << endl;
+    // cout << "vertices.size(): " << vertices.size() << endl;
+    // cout << "vertexMap.size(): " << vertexMap.size() << endl;
+    // for (const auto& [f,s]:vertexMap) cout << "vertexMap: " << f << " " << s << endl;
+
+    // Argmax equivalent to be added around here
+
+    // Select highest probablilty vertex:
+    // BRS: Look to see if we can replace some of this with computeAndSetVertexParameters
+    // Selecting 10 vertices:
+    // int breaker=0;
+    // for (auto it = vertexMap.crbegin(); it != vertexMap.crend(); ++it) {
+    //     if (breaker>9) break; //Choose the top 10 vertices
+    //     std::cout << it->first << " : " << it->second << '\n';
+    //     ++breaker;
+    // }
+    // Selecting the top PV candidate:
+    auto pv = vertexMap.crbegin();
+    std::cout << "pv: " << pv->first << " : " << pv->second << " z0: " << vertices.at(pv->second).z0() << '\n';
+    
+    // For now lets save the 1 top PV:
+    vertices_.emplace_back(vertices.at(pv->second));
+
+    // Run track association:
+    // define a tensor and fill it with track parameters
+    tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {250, 1, 10});
+    // loop over tracks
+    uint trackIt(0);
+    for (const L1Track& track : fitTracks_) {
+      if (trackIt >= 250)
+        break;
+      // track input parameters are z0, 1/pt, eta, chi2, dz
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 0) = float(track.z0());
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 1) = float(track.pt());
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 2) = float(abs(track.eta()));
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 3) = float(track.chi2dof());
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 4) = float(track.bendchi2());
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 5) = float(track.getNumStubs());
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 6) = float(abs(track.z0() - pvZ));
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 7) = float(0);
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 8) = float(0);
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 9) = float(0);
+      trackIt++;
+    }
+    //pad empty tracks with zeros
+    if (trackIt < 250) {
+      for (uint i = trackIt; i < 250; i++) {
+        for (uint j = 0; j < 10; j++) {
+          inputAssoc.tensor<float, 3>()(i, 0, j) = float(0);
+        }
+      }
+    }
+    // cnn output: track probabilities, 0 PU, 1 PV
+    std::vector<tensorflow::Tensor> outputAssoc;
+    // Run Assocaition Network:
+    tensorflow::run(cnnAssSesh, {{"input_1", inputAssoc}}, {"CNNoutput/Sigmoid"}, &outputAssoc);
+    trackIt = 0;
+    // loop over tracks and keep tracks above configurable probability to be from PV
+    std::vector<const L1Track*> cnnPVTracks;
+    for (const L1Track& track : fitTracks_) {
+      if (outputAssoc[0].tensor<float, 3>()(trackIt, 0, 0) > 0.2)
+        cnnPVTracks.push_back(&track);
+      trackIt++;
+    }
+    // End of Association
+    std::cout << "cnnPVTracks.size(): " << cnnPVTracks.size() << '\n';
+    // for (auto it:cnnPVTracks){
+    //   std::cout << "cnnPVTracks z0: " << it->z0() << '\n';
+    // }
+ 
+  }
+
+  void VertexFinder::cnnTrkAssociation(double z0,
+                                       std::vector<const L1Track*>& cnnPVTracks,
+                                       tensorflow::Session* cnnSesh) {
+  //   // define a tensor and fill it with track parameters
+  //   tensorflow::Tensor input(tensorflow::DT_FLOAT, {250, 1, 10});
+
+  //   // loop over tracks
+  //   uint trackIt(0);
+  //   for (const L1Track& track : fitTracks_) {
+  //     if (trackIt >= 250)
+  //       break;
+  //     // track input parameters are z0, 1/pt, eta, chi2, dz
+  //     input.tensor<float, 3>()(trackIt, 0, 0) = float(track.z0());
+  //     input.tensor<float, 3>()(trackIt, 0, 1) = float(track.pt());
+  //     input.tensor<float, 3>()(trackIt, 0, 2) = float(abs(track.eta()));
+  //     input.tensor<float, 3>()(trackIt, 0, 3) = float(track.chi2dof());
+  //     input.tensor<float, 3>()(trackIt, 0, 4) = float(track.bendchi2());
+  //     input.tensor<float, 3>()(trackIt, 0, 5) = float(track.getNumStubs());
+  //     input.tensor<float, 3>()(trackIt, 0, 6) = float(abs(track.z0() - z0));
+  //     input.tensor<float, 3>()(trackIt, 0, 7) = float(0);
+  //     input.tensor<float, 3>()(trackIt, 0, 8) = float(0);
+  //     input.tensor<float, 3>()(trackIt, 0, 9) = float(0);
+  //     trackIt++;
+  //   }
+
+  //   //pad empty tracks with zeros
+  //   if (trackIt < 250) {
+  //     for (uint i = trackIt; i < 250; i++) {
+  //       for (uint j = 0; j < 10; j++) {
+  //         input.tensor<float, 3>()(i, 0, j) = float(0);
+  //       }
+  //     }
+  //   }
+
+  //   // cnn output: track probabilities, 0 PU, 1 PV
+  //   std::vector<tensorflow::Tensor> outputs;
+
+  //   tensorflow::run(cnnSesh, {{"input_1", input}}, {"CNNoutput/Sigmoid"}, &outputs);
+
+  //   trackIt = 0;
+  //   // loop over tracks and keep tracks above
+  //   //configurable probability to be from PV
+  //   for (const L1Track& track : fitTracks_) {
+  //     if (outputs[0].tensor<float, 3>()(trackIt, 0, 0) > 0.2)
+  //       cnnPVTracks.push_back(&track);
+  //     trackIt++;
+  //   }
+  }  // end of cnnAssociation
 
 }  // namespace l1tVertexFinder

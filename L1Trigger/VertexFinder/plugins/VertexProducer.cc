@@ -7,6 +7,7 @@ VertexProducer::VertexProducer(const edm::ParameterSet& iConfig)
     : l1TracksToken_(consumes<TTTrackCollectionView>(iConfig.getParameter<edm::InputTag>("l1TracksInputTag"))),
       trackerTopologyToken_(esConsumes<TrackerTopology, TrackerTopologyRcd>()),
       outputCollectionName_(iConfig.getParameter<std::string>("l1VertexCollectionName")),
+      ttTrackMCTruthToken_(consumes<TTTrackAssociationMap<Ref_Phase2TrackerDigi_> >(iConfig.getParameter<edm::InputTag>("mcTruthTrackInputTag"))),
       settings_(AlgoSettings(iConfig)) {
   // Get configuration parameters
 
@@ -44,6 +45,12 @@ VertexProducer::VertexProducer(const edm::ParameterSet& iConfig)
     case Algorithm::Kmeans:
       edm::LogInfo("VertexProducer") << "VertexProducer::Finding vertices using a kmeans algorithm";
       break;
+    case Algorithm::Generator:
+      edm::LogInfo("VertexProducer") << "VertexProducer::Finding vertices using ** GENERATOR ** vertex (average of TP z0s)";
+      break;
+    case Algorithm::NN:
+      edm::LogInfo("VertexProducer") << "VertexProducer::Finding vertices using the Neural Network algorithm";
+      break;
   }
 
   // Tame debug printout.
@@ -56,7 +63,46 @@ VertexProducer::VertexProducer(const edm::ParameterSet& iConfig)
   } else {
     produces<l1t::VertexCollection>(outputCollectionName_);
   }
-}
+
+  if (settings_.vx_algo() == Algorithm::NN) {
+    // load graphs, create a new session and add the graphDef
+    std::cout << "loading cnn trk weight graph from " << settings_.vx_cnn_trkw_graph() << std::endl;
+    cnnTrkGraph_ = tensorflow::loadGraphDef(settings_.vx_cnn_trkw_graph());
+    cnnTrkSesh_ = tensorflow::createSession(cnnTrkGraph_);
+
+    std::cout << "loading cnn pv z0 graph from " << settings_.vx_cnn_pvz0_graph() << std::endl;
+    cnnPVZ0Graph_ = tensorflow::loadGraphDef(settings_.vx_cnn_pvz0_graph());
+    cnnPVZ0Sesh_ = tensorflow::createSession(cnnPVZ0Graph_);
+
+    std::cout << "loading cnn association graph from " << settings_.vx_cnn_graph() << std::endl;
+    cnnAssGraph_ = tensorflow::loadGraphDef(settings_.vx_cnn_graph());
+    cnnAssSesh_ = tensorflow::createSession(cnnAssGraph_);
+  }
+
+  // if (settings_.vx_use_cnn_trk_weights()) {
+  //   std::cout << "loading cnn trk weight graph from " << settings_.vx_cnn_trkw_graph() << std::endl;
+  //   // load the graph
+  //   cnnTrkGraph_ = tensorflow::loadGraphDef(settings_.vx_cnn_trkw_graph());
+  //   // create a new session and add the graphDef
+  //   cnnTrkSesh_ = tensorflow::createSession(cnnTrkGraph_);
+  // }
+
+  // if (settings_.vx_use_cnn_pvz0()) {
+  //   std::cout << "loading cnn pv z0 graph from " << settings_.vx_cnn_pvz0_graph() << std::endl;
+  //   // load the graph
+  //   cnnPVZ0Graph_ = tensorflow::loadGraphDef(settings_.vx_cnn_pvz0_graph());
+  //   // create a new session and add the graphDef
+  //   cnnPVZ0Sesh_ = tensorflow::createSession(cnnPVZ0Graph_);
+  // }
+
+  // if (settings_.vx_cnn_trk_assoc()) {
+  //   std::cout << "loading cnn association graph from " << settings_.vx_cnn_graph() << std::endl;
+  //   // load the graph
+  //   cnnAssGraph_ = tensorflow::loadGraphDef(settings_.vx_cnn_graph());
+  //   // create a new session and add the graphDef
+  //   cnnAssSesh_ = tensorflow::createSession(cnnAssGraph_);
+  // }
+  }
 
 void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
   edm::Handle<TTTrackCollectionView> l1TracksHandle;
@@ -82,8 +128,37 @@ void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Event
       }
     }
   }
+
+  // // Run NN
+  // if (settings_.vx_use_cnn_trk_weights() || settings_.vx_use_cnn_pvz0()) {
+  //   // Loop over tracks -> weight the network -> set track weights
+  //   tensorflow::Tensor input(tensorflow::DT_FLOAT, {1, 10});
+
+  //   for (auto& track : l1Tracks) {
+  //     // fill tensor with track params
+  //     input.tensor<float, 2>()(0, 0) = float(track.z0());
+  //     input.tensor<float, 2>()(0, 1) = float(track.pt());
+  //     input.tensor<float, 2>()(0, 2) = float(abs(track.eta()));
+  //     input.tensor<float, 2>()(0, 3) = float(track.chi2dof());
+  //     input.tensor<float, 2>()(0, 4) = float(track.bendchi2());
+  //     input.tensor<float, 2>()(0, 5) = float(track.getNumStubs());
+  //     input.tensor<float, 2>()(0, 6) = float(0);
+  //     input.tensor<float, 2>()(0, 7) = float(0);
+  //     input.tensor<float, 2>()(0, 8) = float(0);
+  //     input.tensor<float, 2>()(0, 9) = float(0);
+
+  //     // cnn output: track weight
+  //     std::vector<tensorflow::Tensor> output;
+  //     tensorflow::run(cnnTrkSesh_, {{"track_input", input}}, {"weights_output"}, &output);
+
+  //     // set track weight
+  //     track.setWeight(output[0].tensor<float, 2>()(0, 0));
+  //     cout << "output[0].tensor<float, 2>()(0, 0): " << output[0].tensor<float, 2>()(0, 0) << endl;
+  //   }
+  // }
+
   if (settings_.debug() > 1) {
-    edm::LogInfo("VertexProducer") << "produce::Processing " << l1Tracks.size() << " tracks after minimum pt cut of"
+    edm::LogInfo("VertexProducer") << "produce::Processing " << l1Tracks.size() << " tracks after minimum pt cut of "
                                    << settings_.vx_TrackMinPt() << " GeV";
   }
 
@@ -122,10 +197,31 @@ void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Event
     case Algorithm::Kmeans:
       vf.Kmeans();
       break;
+    case Algorithm::Generator: {
+      std::vector<const L1Track*> pvTracks;
+      for (const auto& track : l1Tracks) {
+        edm::Handle<TTTrackAssociationMap<Ref_Phase2TrackerDigi_> > MCTruthTTTrackHandle;
+        iEvent.getByToken(ttTrackMCTruthToken_, MCTruthTTTrackHandle);
+        edm::Ptr<TrackingParticle> tpMatch = MCTruthTTTrackHandle->findTrackingParticlePtr(track.getTTTrackPtr());
+        if (tpMatch.isNull())
+          continue;
+        if (tpMatch->eventId().event() == 0)
+          pvTracks.push_back(&track);
+      }
+      vf.Generator(pvTracks);
+      break;
+    }
+    case Algorithm::NN:
+      vf.CNNPVZ0Algorithm(cnnTrkSesh_, cnnPVZ0Sesh_, cnnAssSesh_);
+      // edm::ESHandle<TrackerTopology> tTopoHandle = iSetup.getHandle(trackerTopologyToken_); //Temp just to make some vertices
+      // vf.FastHisto(tTopoHandle.product()); //Temp just to make some vertices
+      break;
   }
-
+  cout << "vf.vertices().size(): " << vf.vertices().size() << endl;
   vf.SortVerticesInPt();
   vf.FindPrimaryVertex();
+  // cout << "After Sort and Find: " << endl;
+
 
   // //=== Store output EDM track and hardware stub collections.
   if (settings_.vx_algo() == Algorithm::FastHistoEmulation) {
@@ -139,6 +235,8 @@ void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Event
     }
     iEvent.put(std::move(product), outputCollectionName_);
   }
+  // cout << "iEvent.put: " << endl;
+
 }
 
 DEFINE_FWK_MODULE(VertexProducer);

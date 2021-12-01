@@ -9,6 +9,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "L1Trigger/VertexFinder/interface/AlgoSettings.h"
 #include "L1Trigger/VertexFinder/interface/RecoVertex.h"
+#include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
 
 #include <algorithm>
 #include <iterator>
@@ -115,6 +116,10 @@ namespace l1tVertexFinder {
     void computeAndSetVertexParameters(RecoVertex<>& vertex,
                                        const std::vector<float>& bin_centers,
                                        const std::vector<unsigned int>& counts);
+    /// Histogramming algorithmn as in the TDR + cnn position
+    void CNNPVZ0Algorithm(tensorflow::Session* cnnTrkSesh = 0, tensorflow::Session* cnnPVZ0Sesh = 0, tensorflow::Session* cnnAssSesh = 0);
+    /// Associate tracks to PV z0 provided using CNN
+    void cnnTrkAssociation(double z0, std::vector<const L1Track*>& cnnPVTracks, tensorflow::Session* cnnSesh_);
     /// DBSCAN algorithm
     void DBSCAN();
     /// Histogramming algorithm
@@ -125,6 +130,8 @@ namespace l1tVertexFinder {
     void FastHistoLooseAssociation();
     /// Gap Clustering Algorithm
     void GapClustering();
+    /// Generator Algorithm
+    void Generator(std::vector<const L1Track*>& pvTracks);
     /// High pT Vertex Algorithm
     void HPV();
     /// Kmeans Algorithm

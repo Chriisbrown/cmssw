@@ -29,6 +29,13 @@ namespace l1tVertexFinder {
         vx_dbscan_mintracks_(vertex_.getParameter<unsigned int>("DBSCANMinDensityTracks")),
         vx_kmeans_iterations_(vertex_.getParameter<unsigned int>("KmeansIterations")),
         vx_kmeans_nclusters_(vertex_.getParameter<unsigned int>("KmeansNumClusters")),
+        vx_smear_(vertex_.getParameter<double>("GenVxSmear")),
+        vx_use_cnn_trk_weights_(vertex_.getParameter<bool>("UseCNNTrkWeights")),
+        vx_cnn_trkw_graph_(vertex_.getParameter<std::string>("CNNTrackWeightGraph")),
+        vx_use_cnn_pvz0_(vertex_.getParameter<bool>("UseCNNPVZ0")),
+        vx_cnn_pvz0_graph_(vertex_.getParameter<std::string>("CNNPVZ0Graph")),
+        vx_cnn_trk_assoc_(vertex_.getParameter<bool>("UseCNNTrackAssociation")),
+        vx_cnn_graph_(vertex_.getParameter<std::string>("CNNGraph")),
         // Debug printout
         debug_(iConfig.getParameter<unsigned int>("debug")) {
     const std::string algoName(vertex_.getParameter<std::string>("Algorithm"));
@@ -64,7 +71,9 @@ namespace l1tVertexFinder {
       {"PVR", Algorithm::PVR},
       {"Adaptive", Algorithm::AdaptiveVertexReconstruction},
       {"HPV", Algorithm::HPV},
-      {"K-means", Algorithm::Kmeans}};
+      {"K-means", Algorithm::Kmeans},
+      {"Generator", Algorithm::Generator},
+      {"NN", Algorithm::NN} };
 
   const std::map<Algorithm, Precision> AlgoSettings::algoPrecisionMap = {
       {Algorithm::FastHisto, Precision::Simulation},
@@ -76,6 +85,8 @@ namespace l1tVertexFinder {
       {Algorithm::PVR, Precision::Simulation},
       {Algorithm::AdaptiveVertexReconstruction, Precision::Simulation},
       {Algorithm::HPV, Precision::Simulation},
-      {Algorithm::Kmeans, Precision::Simulation}};
+      {Algorithm::Kmeans, Precision::Simulation},
+      {Algorithm::Generator, Precision::Simulation},
+      {Algorithm::NN, Precision::Simulation} };
 
 }  // end namespace l1tVertexFinder

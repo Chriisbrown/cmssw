@@ -3,13 +3,15 @@ import FWCore.ParameterSet.Config as cms
 VertexProducer = cms.EDProducer('VertexProducer',
 
   l1TracksInputTag = cms.InputTag("TTTracksFromTrackletEmulation", "Level1TTTracks"),
-
   l1VertexCollectionName = cms.string("l1vertices"),
+  mcTruthTrackInputTag = cms.InputTag("TTTrackAssociatorFromPixelDigis", "Level1TTTracks"),
+  tpInputTag = cms.InputTag("mix", "MergedTrackTruth"),
 
   # === Vertex Reconstruction configuration
   VertexReconstruction = cms.PSet(
         # Vertex Reconstruction Algorithm
-        Algorithm = cms.string("FastHisto"),
+        # Algorithm = cms.string("FastHisto"),
+        Algorithm = cms.string("NN"),
         # Vertex distance [cm]
         VertexDistance = cms.double(.15),
         # Assumed Vertex Resolution [cm]
@@ -66,7 +68,18 @@ VertexProducer = cms.EDProducer('VertexProducer',
         VxMinNStub = cms.uint32(4),
         # Minimum number of stubs in PS modules associated to a track
         VxMinNStubPS = cms.uint32(3),
+        ## New CNN Options:
+        GenVxSmear = cms.double(0.2),
+        # Use track weights from CNN
+        UseCNNTrkWeights = cms.bool(True),
+        CNNTrackWeightGraph = cms.string("../../VertexFinder/data/cnnTrkWeight_v2.pb"),
+        # Use track position CNN
+        UseCNNPVZ0 = cms.bool(True),
+        CNNPVZ0Graph = cms.string("../../VertexFinder/data/cnnPVZ0_v2.pb"),
+        # Associated tracks to vertex with CNN
+        UseCNNTrackAssociation = cms.bool(True),
+        CNNGraph = cms.string("../../VertexFinder/data/cnnTrkAssoc_v2.pb")
     ),
   # Debug printout
-  debug  = cms.uint32(0)
+  debug  = cms.uint32(1)
 )
