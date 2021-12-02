@@ -1187,6 +1187,15 @@ namespace l1tVertexFinder {
       if (trackIt >= 250)
         break;
       // track input parameters are z0, 1/pt, eta, chi2, dz
+      // std::cout << "trackIt: " << trackIt 
+      //   << " track.z0(): " << track.z0()
+      //   << " track.pt(): " << track.pt()
+      //   << " abs(track.eta()): " << abs(track.eta())
+      //   << " track.chi2dof(): " << track.chi2dof()
+      //   << " track.bendchi2(): " << track.bendchi2()
+      //   << " track.getNumStubs(): " << track.getNumStubs()
+      //   << " abs(track.z0() - pvZ): " << abs(track.z0() - pvZ)
+      //   << "\n";
       inputAssoc.tensor<float, 3>()(trackIt, 0, 0) = float(track.z0());
       inputAssoc.tensor<float, 3>()(trackIt, 0, 1) = float(track.pt());
       inputAssoc.tensor<float, 3>()(trackIt, 0, 2) = float(abs(track.eta()));
@@ -1213,18 +1222,18 @@ namespace l1tVertexFinder {
     tensorflow::run(cnnAssSesh, {{"input_1", inputAssoc}}, {"CNNoutput/Sigmoid"}, &outputAssoc);
     trackIt = 0;
     // loop over tracks and keep tracks above configurable probability to be from PV
-    std::vector<const L1Track*> cnnPVTracks;
-    for (const L1Track& track : fitTracks_) {
-      if (outputAssoc[0].tensor<float, 3>()(trackIt, 0, 0) > 0.2)
-        cnnPVTracks.push_back(&track);
+    for (L1Track& track : fitTracks_) {
+      track.setMVAProb(outputAssoc[0].tensor<float, 3>()(trackIt, 0, 0)); //settrkMVA1 Used in /L1Trigger/TrackTrigger/src/TrackQuality.cc; so lets use settrkMVA2 if possible
       trackIt++;
     }
+    std::cout << "Print out of the probabilities from the fitTracks_ collection:\n";
+    for (const L1Track& track : fitTracks_) {
+      if (track.MVAProb() > 0.2){
+        // std::cout << "\ttrack->trkMVA2(): " << track.MVAProb() << " z0: " << track.z0() << " pvZ: " << pvZ
+        //           << " abs(track.z0() - pvZ): " << abs(track.z0() - pvZ) << '\n';
+      }
+    }
     // End of Association
-    std::cout << "cnnPVTracks.size(): " << cnnPVTracks.size() << '\n';
-    // for (auto it:cnnPVTracks){
-    //   std::cout << "cnnPVTracks z0: " << it->z0() << '\n';
-    // }
- 
   }
 
 }  // namespace l1tVertexFinder
