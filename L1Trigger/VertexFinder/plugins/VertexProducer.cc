@@ -79,29 +79,6 @@ VertexProducer::VertexProducer(const edm::ParameterSet& iConfig)
     cnnAssSesh_ = tensorflow::createSession(cnnAssGraph_);
   }
 
-  // if (settings_.vx_use_cnn_trk_weights()) {
-  //   std::cout << "loading cnn trk weight graph from " << settings_.vx_cnn_trkw_graph() << std::endl;
-  //   // load the graph
-  //   cnnTrkGraph_ = tensorflow::loadGraphDef(settings_.vx_cnn_trkw_graph());
-  //   // create a new session and add the graphDef
-  //   cnnTrkSesh_ = tensorflow::createSession(cnnTrkGraph_);
-  // }
-
-  // if (settings_.vx_use_cnn_pvz0()) {
-  //   std::cout << "loading cnn pv z0 graph from " << settings_.vx_cnn_pvz0_graph() << std::endl;
-  //   // load the graph
-  //   cnnPVZ0Graph_ = tensorflow::loadGraphDef(settings_.vx_cnn_pvz0_graph());
-  //   // create a new session and add the graphDef
-  //   cnnPVZ0Sesh_ = tensorflow::createSession(cnnPVZ0Graph_);
-  // }
-
-  // if (settings_.vx_cnn_trk_assoc()) {
-  //   std::cout << "loading cnn association graph from " << settings_.vx_cnn_graph() << std::endl;
-  //   // load the graph
-  //   cnnAssGraph_ = tensorflow::loadGraphDef(settings_.vx_cnn_graph());
-  //   // create a new session and add the graphDef
-  //   cnnAssSesh_ = tensorflow::createSession(cnnAssGraph_);
-  // }
   }
 
 void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::EventSetup& iSetup) const {
@@ -128,34 +105,6 @@ void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Event
       }
     }
   }
-
-  // // Run NN
-  // if (settings_.vx_use_cnn_trk_weights() || settings_.vx_use_cnn_pvz0()) {
-  //   // Loop over tracks -> weight the network -> set track weights
-  //   tensorflow::Tensor input(tensorflow::DT_FLOAT, {1, 10});
-
-  //   for (auto& track : l1Tracks) {
-  //     // fill tensor with track params
-  //     input.tensor<float, 2>()(0, 0) = float(track.z0());
-  //     input.tensor<float, 2>()(0, 1) = float(track.pt());
-  //     input.tensor<float, 2>()(0, 2) = float(abs(track.eta()));
-  //     input.tensor<float, 2>()(0, 3) = float(track.chi2dof());
-  //     input.tensor<float, 2>()(0, 4) = float(track.bendchi2());
-  //     input.tensor<float, 2>()(0, 5) = float(track.getNumStubs());
-  //     input.tensor<float, 2>()(0, 6) = float(0);
-  //     input.tensor<float, 2>()(0, 7) = float(0);
-  //     input.tensor<float, 2>()(0, 8) = float(0);
-  //     input.tensor<float, 2>()(0, 9) = float(0);
-
-  //     // cnn output: track weight
-  //     std::vector<tensorflow::Tensor> output;
-  //     tensorflow::run(cnnTrkSesh_, {{"track_input", input}}, {"weights_output"}, &output);
-
-  //     // set track weight
-  //     track.setWeight(output[0].tensor<float, 2>()(0, 0));
-  //     cout << "output[0].tensor<float, 2>()(0, 0): " << output[0].tensor<float, 2>()(0, 0) << endl;
-  //   }
-  // }
 
   if (settings_.debug() > 1) {
     edm::LogInfo("VertexProducer") << "produce::Processing " << l1Tracks.size() << " tracks after minimum pt cut of "

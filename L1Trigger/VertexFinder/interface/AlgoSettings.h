@@ -76,11 +76,8 @@ namespace l1tVertexFinder {
     unsigned int vx_NStubPSMin() const { return vx_NStubPSMin_; }
 
     // Functions for CNN:
-    bool vx_use_cnn_trk_weights() const { return vx_use_cnn_trk_weights_; }
     std::string vx_cnn_trkw_graph() const { return vx_cnn_trkw_graph_; }
-    bool vx_use_cnn_pvz0() const { return vx_use_cnn_pvz0_; }
     std::string vx_cnn_pvz0_graph() const { return vx_cnn_pvz0_graph_; }
-    bool vx_cnn_trk_assoc() const { return vx_cnn_trk_assoc_; }
     std::string vx_cnn_graph() const { return vx_cnn_graph_; }
     float vx_smear() const { return vx_smear_; }
 
@@ -106,7 +103,7 @@ namespace l1tVertexFinder {
 
     // Vertex Reconstruction configuration
     Algorithm vx_algo_;
-    Precision vx_precision_;\
+    Precision vx_precision_;
     float vx_distance_;
     float vx_resolution_;
     unsigned int vx_distanceType_;
@@ -132,11 +129,8 @@ namespace l1tVertexFinder {
     unsigned int vx_kmeans_nclusters_;
     // For CNN:
     float vx_smear_;
-    bool vx_use_cnn_trk_weights_;
     std::string vx_cnn_trkw_graph_;
-    bool vx_use_cnn_pvz0_;
     std::string vx_cnn_pvz0_graph_;
-    bool vx_cnn_trk_assoc_;
     std::string vx_cnn_graph_;
 
     // Debug printout

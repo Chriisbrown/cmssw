@@ -30,11 +30,8 @@ namespace l1tVertexFinder {
         vx_kmeans_iterations_(vertex_.getParameter<unsigned int>("KmeansIterations")),
         vx_kmeans_nclusters_(vertex_.getParameter<unsigned int>("KmeansNumClusters")),
         vx_smear_(vertex_.getParameter<double>("GenVxSmear")),
-        vx_use_cnn_trk_weights_(vertex_.getParameter<bool>("UseCNNTrkWeights")),
         vx_cnn_trkw_graph_(vertex_.getParameter<std::string>("CNNTrackWeightGraph")),
-        vx_use_cnn_pvz0_(vertex_.getParameter<bool>("UseCNNPVZ0")),
         vx_cnn_pvz0_graph_(vertex_.getParameter<std::string>("CNNPVZ0Graph")),
-        vx_cnn_trk_assoc_(vertex_.getParameter<bool>("UseCNNTrackAssociation")),
         vx_cnn_graph_(vertex_.getParameter<std::string>("CNNGraph")),
         // Debug printout
         debug_(iConfig.getParameter<unsigned int>("debug")) {

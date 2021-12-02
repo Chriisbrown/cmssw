@@ -116,10 +116,8 @@ namespace l1tVertexFinder {
     void computeAndSetVertexParameters(RecoVertex<>& vertex,
                                        const std::vector<float>& bin_centers,
                                        const std::vector<unsigned int>& counts);
-    /// Histogramming algorithmn as in the TDR + cnn position
+    /// Histogramming algorithm + cnn position
     void CNNPVZ0Algorithm(tensorflow::Session* cnnTrkSesh = 0, tensorflow::Session* cnnPVZ0Sesh = 0, tensorflow::Session* cnnAssSesh = 0);
-    /// Associate tracks to PV z0 provided using CNN
-    void cnnTrkAssociation(double z0, std::vector<const L1Track*>& cnnPVTracks, tensorflow::Session* cnnSesh_);
     /// DBSCAN algorithm
     void DBSCAN();
     /// Histogramming algorithm
