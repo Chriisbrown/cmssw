@@ -166,7 +166,7 @@ void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Event
       // vf.FastHisto(tTopoHandle.product()); //Temp just to make some vertices
       break;
   }
-  cout << "vf.vertices().size(): " << vf.vertices().size() << endl;
+  // cout << " vf.vertices().size(): " << vf.vertices().size() << endl;
   vf.SortVerticesInPt();
   vf.FindPrimaryVertex();
   // cout << "After Sort and Find: " << endl;

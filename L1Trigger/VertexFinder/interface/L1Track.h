@@ -26,6 +26,9 @@ namespace l1tVertexFinder {
     float bendchi2() const { return track_->stubPtConsistency(); };
     float weight() const { return weight_; };
     void setWeight(float w) { weight_ = w; };
+    float MVAProb() const { return MVAProb_; };
+    void setMVAProb(float p) { MVAProb_=p; }; //Would like to use settrkMVA2 -- but the const on L19 stops us
+
 
     // FIXME: Double check nPar=4 is correct
     // float chi2dof() const { return track_->chi2Red(); };
@@ -38,6 +41,7 @@ namespace l1tVertexFinder {
   private:
     edm::Ptr<TTTrack<Ref_Phase2TrackerDigi_>> track_;
     float weight_;
+    float MVAProb_;
   };
 
 }  // namespace l1tVertexFinder
