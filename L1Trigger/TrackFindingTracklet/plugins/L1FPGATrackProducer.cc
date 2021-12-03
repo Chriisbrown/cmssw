@@ -93,6 +93,7 @@
 #include "DataFormats/GeometrySurface/interface/BoundPlane.h"
 
 #include "L1Trigger/TrackTrigger/interface/StubPtConsistency.h"
+#include "L1Trigger/TrackTrigger/interface/TrackQuality.h"
 
 //////////////
 // STD HEADERS
@@ -169,6 +170,9 @@ private:
 
   unsigned int nHelixPar_;
   bool extended_;
+
+  bool trackQuality_;
+  std::unique_ptr<TrackQuality> trackQualityModel_;
 
   std::map<string, vector<int>> dtclayerdisk;
 
@@ -280,6 +284,10 @@ L1FPGATrackProducer::L1FPGATrackProducer(edm::ParameterSet const& iConfig)
       edm::LogVerbatim("Tracklet") << "table_TED    :  " << tableTEDFile.fullPath()
                                    << "\n table_TRE    :  " << tableTREFile.fullPath();
     }
+  }
+  trackQuality_ = iConfig.getParameter<bool>("TrackQuality");
+  if (trackQuality_) {
+    trackQualityModel_ = std::make_unique<TrackQuality>(iConfig.getParameter<edm::ParameterSet>("TrackQualityPSet"));
   }
 }
 
@@ -683,6 +691,10 @@ void L1FPGATrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
 
     // set TTTrack word
     aTrack.setTrackWordBits();
+
+    if (trackQuality_) {
+      trackQualityModel_->setTrackQuality(aTrack);
+    }
 
     // test track word
     //aTrack.testTrackWordBits();

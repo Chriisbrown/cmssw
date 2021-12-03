@@ -71,11 +71,11 @@ VertexProducer = cms.EDProducer('VertexProducer',
         ## New CNN Options:
         GenVxSmear = cms.double(0.2),
         # Track weight graph CNN
-        CNNTrackWeightGraph = cms.string("../../VertexFinder/data/cnnTrkWeight_v2.pb"),
+        CNNTrackWeightGraph = cms.string("L1Trigger/VertexFinder/data/cnnTrkWeight_v2.pb"),
         # Track position graph CNN
-        CNNPVZ0Graph = cms.string("../../VertexFinder/data/cnnPVZ0_v2.pb"),
+        CNNPVZ0Graph = cms.string("L1Trigger/VertexFinder/data/cnnPVZ0_v2.pb"),
         # Associated tracks to vertex CNN
-        CNNGraph = cms.string("../../VertexFinder/data/cnnTrkAssoc_v2.pb")
+        CNNGraph = cms.string("L1Trigger/VertexFinder/data/cnnTrkAssoc_v2.pb")
     ),
   # Debug printout
   debug  = cms.uint32(1)
