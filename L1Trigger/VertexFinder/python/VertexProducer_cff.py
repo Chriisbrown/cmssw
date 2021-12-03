@@ -72,13 +72,13 @@ VertexProducer = cms.EDProducer('VertexProducer',
         GenVxSmear = cms.double(0.2),
         # Use track weights from CNN
         UseCNNTrkWeights = cms.bool(True),
-        CNNTrackWeightGraph = cms.string("../../VertexFinder/data/cnnTrkWeight_v2.pb"),
+        CNNTrackWeightGraph = cms.string("L1Trigger/VertexFinder/data/cnnTrkWeight_v2.pb"),
         # Use track position CNN
         UseCNNPVZ0 = cms.bool(True),
-        CNNPVZ0Graph = cms.string("../../VertexFinder/data/cnnPVZ0_v2.pb"),
+        CNNPVZ0Graph = cms.string("L1Trigger/VertexFinder/data/cnnPVZ0_v2.pb"),
         # Associated tracks to vertex with CNN
         UseCNNTrackAssociation = cms.bool(True),
-        CNNGraph = cms.string("../../VertexFinder/data/cnnTrkAssoc_v2.pb")
+        CNNGraph = cms.string("L1Trigger/VertexFinder/data/cnnTrkAssoc_v2.pb")
     ),
   # Debug printout
   debug  = cms.uint32(1)
