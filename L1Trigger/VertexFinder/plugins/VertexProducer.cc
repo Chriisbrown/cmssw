@@ -162,8 +162,6 @@ void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Event
     }
     case Algorithm::NN:
       vf.CNNPVZ0Algorithm(cnnTrkSesh_, cnnPVZ0Sesh_, cnnAssSesh_);
-      // edm::ESHandle<TrackerTopology> tTopoHandle = iSetup.getHandle(trackerTopologyToken_); //Temp just to make some vertices
-      // vf.FastHisto(tTopoHandle.product()); //Temp just to make some vertices
       break;
   }
   // cout << " vf.vertices().size(): " << vf.vertices().size() << endl;

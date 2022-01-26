@@ -156,7 +156,7 @@ public:
   ///       to adopt the "chi2Bend" names.
   double stubPtConsistency() const;
   void setStubPtConsistency(double aPtConsistency);
-  double chi2BendRed() { return stubPtConsistency(); }
+  double chi2BendRed() { return stubPtConsistency(); } //BRS: This should be a const
   void setChi2BendRed(double aChi2BendRed) { setStubPtConsistency(aChi2BendRed); }
   double chi2Bend() { return chi2BendRed() * theStubRefs.size(); }
 

@@ -1095,30 +1095,48 @@ namespace l1tVertexFinder {
   void VertexFinder::CNNPVZ0Algorithm(tensorflow::Session* cnnTrkSesh, tensorflow::Session* cnnPVZ0Sesh, tensorflow::Session* cnnAssSesh) {
     // Weight Tracks:
     // Loop over tracks -> weight the network -> set track weights
-    tensorflow::Tensor inputTrkWeight(tensorflow::DT_FLOAT, {1, 10});
+    // tensorflow::Tensor inputTrkWeight(tensorflow::DT_FLOAT, {1, 10});
+    tensorflow::Tensor inputTrkWeight(tensorflow::DT_FLOAT, {1, 3});
+    uint counter = 0;
+    cout << "VertexFinder::CNNPVZ0Algorithm Looping over tracks and inputting 3 track param to network " << endl;
     for (auto& track : fitTracks_) {
       // Fill tensor with track params
-      inputTrkWeight.tensor<float, 2>()(0, 0) = float(track.z0());
-      inputTrkWeight.tensor<float, 2>()(0, 1) = float(track.pt());
-      inputTrkWeight.tensor<float, 2>()(0, 2) = float(abs(track.eta()));
-      inputTrkWeight.tensor<float, 2>()(0, 3) = float(track.chi2dof());
-      inputTrkWeight.tensor<float, 2>()(0, 4) = float(track.bendchi2());
-      inputTrkWeight.tensor<float, 2>()(0, 5) = float(track.getNumStubs());
-      inputTrkWeight.tensor<float, 2>()(0, 6) = float(0);
-      inputTrkWeight.tensor<float, 2>()(0, 7) = float(0);
-      inputTrkWeight.tensor<float, 2>()(0, 8) = float(0);
-      inputTrkWeight.tensor<float, 2>()(0, 9) = float(0);
+      // inputTrkWeight.tensor<float, 2>()(0, 0) = float(track.z0());
+      // inputTrkWeight.tensor<float, 2>()(0, 1) = float(track.pt());
+      // inputTrkWeight.tensor<float, 2>()(0, 2) = float(abs(track.eta()));
+      // inputTrkWeight.tensor<float, 2>()(0, 3) = float(track.chi2dof());
+      // inputTrkWeight.tensor<float, 2>()(0, 4) = float(track.bendchi2());
+      // inputTrkWeight.tensor<float, 2>()(0, 5) = float(track.getNumStubs());
+      // inputTrkWeight.tensor<float, 2>()(0, 6) = float(0);
+      // inputTrkWeight.tensor<float, 2>()(0, 7) = float(0);
+      // inputTrkWeight.tensor<float, 2>()(0, 8) = float(0);
+      // inputTrkWeight.tensor<float, 2>()(0, 9) = float(0);
+
+      // Chris' Network: normed_trk_pt, trk_MVA1, normed_trk_eta
+      float pT = track.pt() > 512.0 ? 1.0 : track.pt()/512.0;
+      inputTrkWeight.tensor<float, 2>()(0, 0) = float(pT);
+      inputTrkWeight.tensor<float, 2>()(0, 1) = float(track.MVA1());
+      inputTrkWeight.tensor<float, 2>()(0, 2) = float((abs(track.eta())/2.4));
+
       // CNN output: track weight
       std::vector<tensorflow::Tensor> outputTrkWeight;
-      tensorflow::run(cnnTrkSesh, {{"track_input", inputTrkWeight}}, {"weights_output"}, &outputTrkWeight);
+      // tensorflow::run(cnnTrkSesh, {{"track_input", inputTrkWeight}}, {"weights_output"}, &outputTrkWeight);
+      tensorflow::run(cnnTrkSesh, {{"weight:0", inputTrkWeight}}, {"Identity:0"}, &outputTrkWeight);
       // Set track weight
       track.setWeight(outputTrkWeight[0].tensor<float, 2>()(0, 0));
-      // cout << "outputTrkWeight[0].tensor<float, 2>()(0, 0): " << outputTrkWeight[0].tensor<float, 2>()(0, 0) << endl;
+      cout << "\t[" << counter << "]: "
+          << " pT: " << pT
+          << " MVA1: " << track.MVA1()
+          << " eta: " << abs(track.eta())/2.4
+          << "  outputTrkWeight[0].tensor<float, 2>()(0, 0): " << outputTrkWeight[0].tensor<float, 2>()(0, 0) << endl;
+      ++counter;
     }
 
     // Find Vertices:
     // define a tensor and fill it with track parameters
+    cout << " Finding Verticies " << endl;
     tensorflow::Tensor inputPV(tensorflow::DT_FLOAT, {1, 256, 1});
+    // tensorflow::Tensor inputPV(tensorflow::DT_FLOAT, {1, 256});
     std::vector<tensorflow::Tensor> outputPV;
     RecoVertexCollection vertices(256.);
     // std::map<float, std::shared_ptr<l1tVertexFinder::RecoVertex>> vertexMap; //BRS: Would be nice to do this: but not working yet
@@ -1142,7 +1160,7 @@ namespace l1tVertexFinder {
       // vertexMap[vxWeight]=&vertices.at(zbin);
       // vertexMap[z+binWidth/2.]=vxWeight;
       // vertexMap[zbin]=vxWeight;
-      vertexMap[vxWeight]=zbin; //BRS: Warning: rare chance to have exactly the same floating key?
+      vertexMap[vxWeight]=zbin; //BRS: Warning: rare chance to have exactly the same non-zero floating key?
       inputPV.tensor<float, 3>()(0, zbin, 0) = vxWeight;
       if (vxWeight > pvWeight) {
         pvWeight = vxWeight;
@@ -1151,7 +1169,9 @@ namespace l1tVertexFinder {
     }
 
     // Run PV Network:
+    cout << " Running PV Network " << endl;
     tensorflow::run(cnnPVZ0Sesh, {{"hists_input", inputPV}}, {"pv_position_output"}, &outputPV);
+    // tensorflow::run(cnnPVZ0Sesh, {{"hist:0", inputPV}}, {"Identity:0"}, &outputPV);
     cout << " pvZ = " << pvZ
           << " pvWeight = " << pvWeight
           << " cnn z " << outputPV[0].tensor<float, 2>()(0, 0) 
@@ -1179,8 +1199,12 @@ namespace l1tVertexFinder {
     vertices_.emplace_back(vertices.at(pv->second));
 
     // Run track association:
+    cout << " Track Association " << endl;
     // define a tensor and fill it with track parameters
-    tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {250, 1, 10});
+    // tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {250, 1, 10});
+    // tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {250, 1, 4});
+    tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {1, 4}); 
+    
     // loop over tracks
     uint trackIt(0);
     for (const L1Track& track : fitTracks_) {
@@ -1196,16 +1220,31 @@ namespace l1tVertexFinder {
       //   << " track.getNumStubs(): " << track.getNumStubs()
       //   << " abs(track.z0() - pvZ): " << abs(track.z0() - pvZ)
       //   << "\n";
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 0) = float(track.z0());
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 1) = float(track.pt());
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 2) = float(abs(track.eta()));
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 3) = float(track.chi2dof());
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 4) = float(track.bendchi2());
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 5) = float(track.getNumStubs());
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 6) = float(abs(track.z0() - pvZ));
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 7) = float(0);
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 8) = float(0);
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 9) = float(0);
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 0) = float(track.z0());
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 1) = float(track.pt());
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 2) = float(abs(track.eta()));
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 3) = float(track.chi2dof());
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 4) = float(track.bendchi2());
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 5) = float(track.getNumStubs());
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 6) = float(abs(track.z0() - pvZ));
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 7) = float(0);
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 8) = float(0);
+      // inputAssoc.tensor<float, 3>()(trackIt, 0, 9) = float(0);
+
+      // Chris' Network: deltaZ, normed_trk_pt, trk_MVA1, trk_over_eta_squared
+      float pT = track.pt() > 512.0 ? 1.0 : track.pt()/512.0;
+      std::cout << "trackIt: " << trackIt 
+        << " deltaZ: " << float(abs(track.z0() - pvZ))
+        << " normed_trk_pt: " << pT
+        << " trk_MVA1: " << float(track.MVA1())
+        << " trk_over_eta_squared: " << 5.76/(float(abs(track.eta()))*float(abs(track.eta())))
+        << "\n";
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 0) = float(abs(track.z0() - pvZ));
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 1) = pT;
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 2) = float(track.MVA1());
+      inputAssoc.tensor<float, 3>()(trackIt, 0, 3) = 5.76/(float(abs(track.eta()))*float(abs(track.eta())));
+
+      
       trackIt++;
     }
     //pad empty tracks with zeros
@@ -1219,20 +1258,21 @@ namespace l1tVertexFinder {
     // cnn output: track probabilities, 0 PU, 1 PV
     std::vector<tensorflow::Tensor> outputAssoc;
     // Run Association Network:
-    tensorflow::run(cnnAssSesh, {{"input_1", inputAssoc}}, {"CNNoutput/Sigmoid"}, &outputAssoc);
+    // tensorflow::run(cnnAssSesh, {{"input_1", inputAssoc}}, {"CNNoutput/Sigmoid"}, &outputAssoc);
+    tensorflow::run(cnnAssSesh, {{"assoc:0", inputAssoc}}, {"Identity:0"}, &outputAssoc);
     trackIt = 0;
     // loop over tracks and store probability in track
     for (L1Track& track : fitTracks_) {
       track.setMVAProb(outputAssoc[0].tensor<float, 3>()(trackIt, 0, 0)); //settrkMVA1 Used in /L1Trigger/TrackTrigger/src/TrackQuality.cc; so lets use settrkMVA2 if possible
       trackIt++;
     }
-    // std::cout << "Print out of the probabilities from the fitTracks_ collection:\n";
-    // for (const L1Track& track : fitTracks_) {
-    //   if (track.MVAProb() > 0.2){
-        // std::cout << "\ttrack->trkMVA2(): " << track.MVAProb() << " z0: " << track.z0() << " pvZ: " << pvZ
-        //           << " abs(track.z0() - pvZ): " << abs(track.z0() - pvZ) << '\n';
-      // }
-    // }
+    std::cout << "Print out of the probabilities from the fitTracks_ collection:\n";
+    for (const L1Track& track : fitTracks_) {
+      if (track.MVAProb() > 0.2){
+        std::cout << "\ttrack->trkMVA2(): " << track.MVAProb() << " z0: " << track.z0() << " pvZ: " << pvZ
+                  << " abs(track.z0() - pvZ): " << abs(track.z0() - pvZ) << '\n';
+      }
+    }
     // End of Association
 
   } // end of CNNPVZ0Algorithm

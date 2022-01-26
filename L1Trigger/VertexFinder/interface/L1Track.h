@@ -28,7 +28,7 @@ namespace l1tVertexFinder {
     void setWeight(float w) { weight_ = w; };
     float MVAProb() const { return MVAProb_; };
     void setMVAProb(float p) { MVAProb_=p; }; //Would like to use settrkMVA2 -- but the const on L19 stops us
-
+    double MVA1() const { return track_->trkMVA1(); };
 
     // FIXME: Double check nPar=4 is correct
     // float chi2dof() const { return track_->chi2Red(); };
