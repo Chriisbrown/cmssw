@@ -1096,7 +1096,7 @@ namespace l1tVertexFinder {
     // Weight Tracks:
     // Loop over tracks -> weight the network -> set track weights
     // tensorflow::Tensor inputTrkWeight(tensorflow::DT_FLOAT, {1, 10});
-    tensorflow::Tensor inputTrkWeight(tensorflow::DT_FLOAT, {1, 3});
+    tensorflow::Tensor inputTrkWeight(tensorflow::DT_FLOAT, {1, 3});  //Single batch of 3 values
     uint counter = 0;
     cout << "VertexFinder::CNNPVZ0Algorithm Looping over tracks and inputting 3 track param to network " << endl;
     for (auto& track : fitTracks_) {
@@ -1134,51 +1134,74 @@ namespace l1tVertexFinder {
 
     // Find Vertices:
     // define a tensor and fill it with track parameters
-    cout << " Finding Verticies " << endl;
-    tensorflow::Tensor inputPV(tensorflow::DT_FLOAT, {1, 256, 1});
-    // tensorflow::Tensor inputPV(tensorflow::DT_FLOAT, {1, 256});
+    cout << "Finding Vertices " << endl;
+    tensorflow::Tensor inputPV(tensorflow::DT_FLOAT, {1, 256, 1});  //Single batch with 256 bins and 1 weight?
+    // tensorflow::Tensor inputPV(tensorflow::DT_FLOAT, [1, 256]);  //Single batch with 256 bins and 1 weight?
     std::vector<tensorflow::Tensor> outputPV;
     RecoVertexCollection vertices(256.);
     // std::map<float, std::shared_ptr<l1tVertexFinder::RecoVertex>> vertexMap; //BRS: Would be nice to do this: but not working yet
     // std::map<float, float> vertexMap;
     // std::map<int, float> vertexMap;
     std::map<float, int> vertexMap;
+    std::map<int, float> histogram;
 
     float pvWeight = 0.;
     float pvZ = -999.;
     float binWidth = 30./256.;
+    cout << " Filling inputPV" << endl;
+    // Fill Histogram of 256 bins
     for (float z = -15; z < 15.; z += binWidth) {
       int zbin = (int)((z + 15.)/binWidth);
+      int zbinPhalf = (int)(zbin+0.5*binWidth); // zbin plus half a binwidth
       float vxWeight = 0;
       for (const L1Track& track : fitTracks_) {
         if (track.z0() >= z && track.z0() < (z + binWidth)) {
-          vertices.at(zbin).insert(&track);
+          vertices.at(zbinPhalf).insert(&track);
           vxWeight += track.weight();
         }
       }
-      vertices.at(zbin).setZ0(z);
-      // vertexMap[vxWeight]=&vertices.at(zbin);
-      // vertexMap[z+binWidth/2.]=vxWeight;
-      // vertexMap[zbin]=vxWeight;
-      vertexMap[vxWeight]=zbin; //BRS: Warning: rare chance to have exactly the same non-zero floating key?
-      inputPV.tensor<float, 3>()(0, zbin, 0) = vxWeight;
+      vertices.at(zbinPhalf).setZ0(z+0.5*binWidth);
+      vertexMap[vxWeight]=zbinPhalf; //BRS: Warning: rare chance to have exactly the same non-zero floating key?
+      inputPV.tensor<float, 3>()(0, zbinPhalf, 1) = vxWeight;
+      // inputPV.tensor<float, 2>()(zbin, 0) = vxWeight;
       if (vxWeight > pvWeight) {
         pvWeight = vxWeight;
         pvZ = z;
       }
+      //Fill histogram for 3 bin sliding window:
+      histogram[zbin]=vxWeight;
     }
+    // for (const auto& [f,s]:histogram) cout << "\thistogram: " << f << " " << s << endl;
+
+    // // 3 Bin sliding window
+    float threeBinMax = 0;
+    float threeBinCentre = 0;
+    float threeBinPVZ = 0;
+    for (int bin=1; bin<((int) histogram.size()-1); ++bin){ // Sliding window when not at min/max of histogram
+      float threeBinSum = histogram[bin-1]+histogram[bin]+histogram[bin+1];
+      if (threeBinSum > threeBinMax) {
+        threeBinMax = threeBinSum;
+        threeBinCentre = histogram[bin];
+        threeBinPVZ = ((bin+0.5)*binWidth)-15.;
+      }
+    }
+    cout << " threeBinPVZ: " << threeBinPVZ << " threeBinMax: " << threeBinMax << " threeBinCentre: " << threeBinCentre << endl;
+
 
     // Run PV Network:
     cout << " Running PV Network " << endl;
-    tensorflow::run(cnnPVZ0Sesh, {{"hists_input", inputPV}}, {"pv_position_output"}, &outputPV);
-    // tensorflow::run(cnnPVZ0Sesh, {{"hist:0", inputPV}}, {"Identity:0"}, &outputPV);
+    // tensorflow::run(cnnPVZ0Sesh, {{"hists_input", inputPV}}, {"pv_position_output"}, &outputPV);
+    tensorflow::run(cnnPVZ0Sesh, {{"hist:0", inputPV}}, {"Identity:0"}, &outputPV);
+    cout << " PV Network has run" << endl;
+
     cout << " pvZ = " << pvZ
           << " pvWeight = " << pvWeight
-          << " cnn z " << outputPV[0].tensor<float, 2>()(0, 0) 
+          // << " cnn z " << outputPV[0].tensor<float, 2>()(0, 0)
+          << " cnn z " << outputPV[0].tensor<float, 3>()(0, 0, 0) //BRS: Not functioning correctly
           << endl;
-    // cout << "vertices.size(): " << vertices.size() << endl;
-    // cout << "vertexMap.size(): " << vertexMap.size() << endl;
-    // for (const auto& [f,s]:vertexMap) cout << "vertexMap: " << f << " " << s << endl;
+    cout << " vertices.size(): " << vertices.size() << endl;
+    cout << " vertexMap.size(): " << vertexMap.size() << endl;
+    for (const auto& [f,s]:vertexMap) cout << "\tvertexMap: " << f << " " << s << endl;
 
     // Argmax equivalent to be added around here
 
@@ -1199,17 +1222,19 @@ namespace l1tVertexFinder {
     vertices_.emplace_back(vertices.at(pv->second));
 
     // Run track association:
-    cout << " Track Association " << endl;
+    cout << "Track Association " << endl;
     // define a tensor and fill it with track parameters
     // tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {250, 1, 10});
     // tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {250, 1, 4});
-    tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {1, 4}); 
-    
+    tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {1, 4});  //Single batch of 4 values
+        cout << " inputAssoc made " << endl;
+
+
     // loop over tracks
     uint trackIt(0);
     for (const L1Track& track : fitTracks_) {
-      if (trackIt >= 250)
-        break;
+      // if (trackIt >= 250)
+      //   break;
       // track input parameters are z0, 1/pt, eta, chi2, dz
       // std::cout << "trackIt: " << trackIt 
       //   << " track.z0(): " << track.z0()
@@ -1233,40 +1258,51 @@ namespace l1tVertexFinder {
 
       // Chris' Network: deltaZ, normed_trk_pt, trk_MVA1, trk_over_eta_squared
       float pT = track.pt() > 512.0 ? 1.0 : track.pt()/512.0;
-      std::cout << "trackIt: " << trackIt 
-        << " deltaZ: " << float(abs(track.z0() - pvZ))
+      std::cout << "\ttrackIt[" << trackIt 
+        << "]: deltaZ: " << float(abs(track.z0() - pvZ))
         << " normed_trk_pt: " << pT
         << " trk_MVA1: " << float(track.MVA1())
         << " trk_over_eta_squared: " << 5.76/(float(abs(track.eta()))*float(abs(track.eta())))
         << "\n";
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 0) = float(abs(track.z0() - pvZ));
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 1) = pT;
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 2) = float(track.MVA1());
-      inputAssoc.tensor<float, 3>()(trackIt, 0, 3) = 5.76/(float(abs(track.eta()))*float(abs(track.eta())));
+      inputAssoc.tensor<float, 2>()(trackIt, 0) = float(abs(track.z0() - pvZ));
+      inputAssoc.tensor<float, 2>()(trackIt, 1) = pT;
+      inputAssoc.tensor<float, 2>()(trackIt, 2) = float(track.MVA1());
+      inputAssoc.tensor<float, 2>()(trackIt, 3) = 5.76/(float(abs(track.eta()))*float(abs(track.eta())));
+
+      // inputAssoc.tensor<float, 2>()(0, 0) = float(abs(track.z0() - pvZ));
+      // inputAssoc.tensor<float, 2>()(0, 1) = pT;
+      // inputAssoc.tensor<float, 2>()(0, 2) = float(track.MVA1());
+      // inputAssoc.tensor<float, 2>()(0, 3) = 5.76/(float(abs(track.eta()))*float(abs(track.eta())));
 
       
       trackIt++;
     }
-    //pad empty tracks with zeros
-    if (trackIt < 250) {
-      for (uint i = trackIt; i < 250; i++) {
-        for (uint j = 0; j < 10; j++) {
-          inputAssoc.tensor<float, 3>()(i, 0, j) = float(0);
-        }
-      }
-    }
+    std::cout << " Finished inputting to inputAssoc:\n";
+
+    //pad empty tracks with zeros for Aaron's network
+    // if (trackIt < 250) {
+    //   for (uint i = trackIt; i < 250; i++) {
+    //     for (uint j = 0; j < 10; j++) {
+    //       inputAssoc.tensor<float, 3>()(i, 0, j) = float(0);
+    //     }
+    //   }
+    // }
+
     // cnn output: track probabilities, 0 PU, 1 PV
     std::vector<tensorflow::Tensor> outputAssoc;
     // Run Association Network:
+    std::cout << "Run Association Network:\n";
     // tensorflow::run(cnnAssSesh, {{"input_1", inputAssoc}}, {"CNNoutput/Sigmoid"}, &outputAssoc);
     tensorflow::run(cnnAssSesh, {{"assoc:0", inputAssoc}}, {"Identity:0"}, &outputAssoc);
     trackIt = 0;
     // loop over tracks and store probability in track
+    std::cout << " Loop over outputAssoc:\n";
     for (L1Track& track : fitTracks_) {
-      track.setMVAProb(outputAssoc[0].tensor<float, 3>()(trackIt, 0, 0)); //settrkMVA1 Used in /L1Trigger/TrackTrigger/src/TrackQuality.cc; so lets use settrkMVA2 if possible
+      // track.setMVAProb(outputAssoc[0].tensor<float, 3>()(trackIt, 0, 0)); //settrkMVA1 Used in /L1Trigger/TrackTrigger/src/TrackQuality.cc; so lets use settrkMVA2 if possible
+      track.setMVAProb(outputAssoc[0].tensor<float, 2>()(trackIt, 0)); //settrkMVA1 Used in /L1Trigger/TrackTrigger/src/TrackQuality.cc; so lets use settrkMVA2 if possible
       trackIt++;
     }
-    std::cout << "Print out of the probabilities from the fitTracks_ collection:\n";
+    std::cout << " Print out of the probabilities from the fitTracks_ collection:\n";
     for (const L1Track& track : fitTracks_) {
       if (track.MVAProb() > 0.2){
         std::cout << "\ttrack->trkMVA2(): " << track.MVAProb() << " z0: " << track.z0() << " pvZ: " << pvZ
