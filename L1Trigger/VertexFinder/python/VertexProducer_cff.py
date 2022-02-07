@@ -39,7 +39,8 @@ VertexProducer = cms.EDProducer('VertexProducer',
         # Firmware: [-14.4, 14.4, 0.4]
         FH_HistogramParameters = cms.vdouble(-30.0, 30.0, 0.09983361065),
         # The number of vertixes to return (i.e. N windows with the highest combined pT)
-        FH_NVtx = cms.uint32(10),
+        # FH_NVtx = cms.uint32(10),
+        FH_NVtx = cms.uint32(1),
         # FastHisto algorithm assumed vertex half-width [cm]
         FH_VertexWidth = cms.double(.15),
         # Window size of the sliding window
@@ -73,15 +74,18 @@ VertexProducer = cms.EDProducer('VertexProducer',
         # Track weight graph CNN
         # CNNTrackWeightGraph = cms.string("../../VertexFinder/data/cnnTrkWeight_v2.pb"),
         # CNNTrackWeightGraph = cms.string("../../VertexFinder/data/weightModelgraph.pb"),
-        CNNTrackWeightGraph = cms.string("../../VertexFinder/data/Unquantised_model_weightModelgraph.pb"),        
+        # CNNTrackWeightGraph = cms.string("../../VertexFinder/data/Unquantised_model_weightModelgraph.pb"),        
+        CNNTrackWeightGraph = cms.string("Unquantised_model_weightModelgraph.pb"),        
         # Track position graph CNN
         # CNNPVZ0Graph = cms.string("../../VertexFinder/data/cnnPVZ0_v2.pb"),
         # CNNPVZ0Graph = cms.string("../../VertexFinder/data/patternModelgraph.pb"),
-        CNNPVZ0Graph = cms.string("../../VertexFinder/data/Unquantised_model_patternModelgraph.pb"),
+        # CNNPVZ0Graph = cms.string("../../VertexFinder/data/Unquantised_model_patternModelgraph.pb"),
+        CNNPVZ0Graph = cms.string("Unquantised_model_patternModelgraph.pb"),
         # Associated tracks to vertex CNN
         # CNNGraph = cms.string("../../VertexFinder/data/cnnTrkAssoc_v2.pb")
         # CNNGraph = cms.string("../../VertexFinder/data/asociationModelgraph.pb")
-        CNNGraph = cms.string("../../VertexFinder/data/Unquantised_model_associationModelgraph.pb")
+        # CNNGraph = cms.string("../../VertexFinder/data/Unquantised_model_associationModelgraph.pb")
+        CNNGraph = cms.string("Unquantised_model_associationModelgraph.pb")
     ),
   # Debug printout
   debug  = cms.uint32(1)

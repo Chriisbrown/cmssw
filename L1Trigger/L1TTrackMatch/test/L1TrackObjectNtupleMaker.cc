@@ -219,6 +219,7 @@ private:
   std::vector<float>* m_trk_chi2rz;
   std::vector<float>* m_trk_bendchi2;
   std::vector<float>* m_trk_MVA1;
+  std::vector<float>* m_trk_MVA2;
   std::vector<int>* m_trk_nstub;
   std::vector<int>* m_trk_lhits;
   std::vector<int>* m_trk_dhits;
@@ -295,6 +296,7 @@ private:
   std::vector<float>* m_matchtrk_chi2rz;
   std::vector<float>* m_matchtrk_bendchi2;
   std::vector<float>* m_matchtrk_MVA1;
+  std::vector<float>* m_matchtrk_MVA2;
   std::vector<int>* m_matchtrk_nstub;
   std::vector<int>* m_matchtrk_lhits;
   std::vector<int>* m_matchtrk_dhits;
@@ -530,6 +532,7 @@ void L1TrackObjectNtupleMaker::beginJob() {
   m_trk_chi2rz = new std::vector<float>;
   m_trk_bendchi2 = new std::vector<float>;
   m_trk_MVA1 = new std::vector<float>;
+  m_trk_MVA2 = new std::vector<float>;
   m_trk_nstub = new std::vector<int>;
   m_trk_lhits = new std::vector<int>;
   m_trk_dhits = new std::vector<int>;
@@ -608,6 +611,7 @@ void L1TrackObjectNtupleMaker::beginJob() {
   m_matchtrk_chi2rz = new std::vector<float>;
   m_matchtrk_bendchi2 = new std::vector<float>;
   m_matchtrk_MVA1 = new std::vector<float>;
+  m_matchtrk_MVA2 = new std::vector<float>;
   m_matchtrk_nstub = new std::vector<int>;
   m_matchtrk_dhits = new std::vector<int>;
   m_matchtrk_lhits = new std::vector<int>;
@@ -734,6 +738,7 @@ void L1TrackObjectNtupleMaker::beginJob() {
     eventTree->Branch("trk_chi2rz", &m_trk_chi2rz);
     eventTree->Branch("trk_bendchi2", &m_trk_bendchi2);
     eventTree->Branch("trk_MVA1", &m_trk_MVA1);
+    eventTree->Branch("trk_MVA2", &m_trk_MVA2);
     eventTree->Branch("trk_nstub", &m_trk_nstub);
     eventTree->Branch("trk_lhits", &m_trk_lhits);
     eventTree->Branch("trk_dhits", &m_trk_dhits);
@@ -825,6 +830,7 @@ void L1TrackObjectNtupleMaker::beginJob() {
     eventTree->Branch("matchtrk_chi2rz", &m_matchtrk_chi2rz);
     eventTree->Branch("matchtrk_bendchi2", &m_matchtrk_bendchi2);
     eventTree->Branch("matchtrk_MVA1", &m_matchtrk_MVA1);
+    eventTree->Branch("matchtrk_MVA2", &m_matchtrk_MVA2);
     eventTree->Branch("matchtrk_nstub", &m_matchtrk_nstub);
     eventTree->Branch("matchtrk_lhits", &m_matchtrk_lhits);
     eventTree->Branch("matchtrk_dhits", &m_matchtrk_dhits);
@@ -1004,6 +1010,7 @@ void L1TrackObjectNtupleMaker::analyze(const edm::Event& iEvent, const edm::Even
     m_trk_chi2rz->clear();
     m_trk_bendchi2->clear();
     m_trk_MVA1->clear();
+    m_trk_MVA2->clear();
     m_trk_nstub->clear();
     m_trk_lhits->clear();
     m_trk_dhits->clear();
@@ -1084,6 +1091,7 @@ void L1TrackObjectNtupleMaker::analyze(const edm::Event& iEvent, const edm::Even
     m_matchtrk_chi2rz->clear();
     m_matchtrk_bendchi2->clear();
     m_matchtrk_MVA1->clear();
+    m_matchtrk_MVA2->clear();
     m_matchtrk_nstub->clear();
     m_matchtrk_lhits->clear();
     m_matchtrk_dhits->clear();
@@ -1459,6 +1467,7 @@ void L1TrackObjectNtupleMaker::analyze(const edm::Event& iEvent, const edm::Even
       float tmp_trk_chi2rz = iterL1Track->chi2Z();
       float tmp_trk_bendchi2 = iterL1Track->stubPtConsistency();
       float tmp_trk_MVA1 = -99.9;  //update with actual MVA when available
+      float tmp_trk_MVA2 = -99.9;  //update with actual MVA when available
 
       std::vector<edm::Ref<edmNew::DetSetVector<TTStub<Ref_Phase2TrackerDigi_> >, TTStub<Ref_Phase2TrackerDigi_> > >
           stubRefs = iterL1Track->getStubRefs();
@@ -1546,6 +1555,7 @@ void L1TrackObjectNtupleMaker::analyze(const edm::Event& iEvent, const edm::Even
       m_trk_chi2rz->push_back(tmp_trk_chi2rz);
       m_trk_bendchi2->push_back(tmp_trk_bendchi2);
       m_trk_MVA1->push_back(tmp_trk_MVA1);
+      m_trk_MVA2->push_back(tmp_trk_MVA2);
       m_trk_nstub->push_back(tmp_trk_nstub);
       m_trk_dhits->push_back(tmp_trk_dhits);
       m_trk_lhits->push_back(tmp_trk_lhits);
@@ -1642,6 +1652,7 @@ void L1TrackObjectNtupleMaker::analyze(const edm::Event& iEvent, const edm::Even
       float tmp_trk_chi2rz = iterL1Track->chi2Z();
       float tmp_trk_bendchi2 = iterL1Track->stubPtConsistency();
       float tmp_trk_MVA1 = -99.9;  //update when actual MVA is available
+      float tmp_trk_MVA2 = -99.9;  //update when actual MVA is available
 
       std::vector<edm::Ref<edmNew::DetSetVector<TTStub<Ref_Phase2TrackerDigi_> >, TTStub<Ref_Phase2TrackerDigi_> > >
           stubRefs = iterL1Track->getStubRefs();
@@ -2053,6 +2064,7 @@ void L1TrackObjectNtupleMaker::analyze(const edm::Event& iEvent, const edm::Even
       float tmp_matchtrk_chi2rz = -999;
       float tmp_matchtrk_bendchi2 = -999;
       float tmp_matchtrk_MVA1 = -999;
+      float tmp_matchtrk_MVA2 = -999;
       int tmp_matchtrk_nstub = -999;
       int tmp_matchtrk_dhits = -999;
       int tmp_matchtrk_lhits = -999;
@@ -2083,6 +2095,7 @@ void L1TrackObjectNtupleMaker::analyze(const edm::Event& iEvent, const edm::Even
         tmp_matchtrk_chi2rz = matchedTracks.at(i_track)->chi2Z();
         tmp_matchtrk_bendchi2 = matchedTracks.at(i_track)->stubPtConsistency();
         tmp_matchtrk_MVA1 = -99.9;  //update when MVA is available
+        tmp_matchtrk_MVA2 = -99.9;  //update when MVA is available
         tmp_matchtrk_nstub = (int)matchedTracks.at(i_track)->getStubRefs().size();
         tmp_matchtrk_seed = (int)matchedTracks.at(i_track)->trackSeedType();
         tmp_matchtrk_hitpattern = (int)matchedTracks.at(i_track)->hitPattern();
@@ -2121,6 +2134,7 @@ void L1TrackObjectNtupleMaker::analyze(const edm::Event& iEvent, const edm::Even
       m_matchtrk_chi2rz->push_back(tmp_matchtrk_chi2rz);
       m_matchtrk_bendchi2->push_back(tmp_matchtrk_bendchi2);
       m_matchtrk_MVA1->push_back(tmp_matchtrk_MVA1);
+      m_matchtrk_MVA2->push_back(tmp_matchtrk_MVA2);
       m_matchtrk_nstub->push_back(tmp_matchtrk_nstub);
       m_matchtrk_dhits->push_back(tmp_matchtrk_dhits);
       m_matchtrk_lhits->push_back(tmp_matchtrk_lhits);
