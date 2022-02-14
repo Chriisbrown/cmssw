@@ -40,6 +40,7 @@ private:
 
 private:
   const edm::EDGetTokenT<TTTrackCollectionView> l1TracksToken_;
+  const edm::EDGetTokenT<TTTrackCollectionView> l1GTTTrackInputTag_;
   const edm::ESGetToken<TrackerTopology, TrackerTopologyRcd> trackerTopologyToken_;
   const std::string outputCollectionName_;
   const edm::EDGetTokenT<TTTrackAssociationMap< Ref_Phase2TrackerDigi_ > > ttTrackMCTruthToken_;

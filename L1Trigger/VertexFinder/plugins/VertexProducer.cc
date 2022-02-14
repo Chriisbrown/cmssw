@@ -5,6 +5,7 @@ using namespace std;
 
 VertexProducer::VertexProducer(const edm::ParameterSet& iConfig)
     : l1TracksToken_(consumes<TTTrackCollectionView>(iConfig.getParameter<edm::InputTag>("l1TracksInputTag"))),
+      l1GTTTrackInputTag_(consumes<TTTrackCollectionView>(iConfig.getParameter<edm::InputTag>("l1GTTTrackInputTag"))),
       trackerTopologyToken_(esConsumes<TrackerTopology, TrackerTopologyRcd>()),
       outputCollectionName_(iConfig.getParameter<std::string>("l1VertexCollectionName")),
       ttTrackMCTruthToken_(consumes<TTTrackAssociationMap<Ref_Phase2TrackerDigi_> >(iConfig.getParameter<edm::InputTag>("mcTruthTrackInputTag"))),
@@ -85,6 +86,17 @@ void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Event
   edm::Handle<TTTrackCollectionView> l1TracksHandle;
   iEvent.getByToken(l1TracksToken_, l1TracksHandle);
 
+  edm::Handle<TTTrackCollectionView> l1GTTTrackInputHandle;
+  iEvent.getByToken(l1GTTTrackInputTag_, l1GTTTrackInputHandle);
+  std::vector<l1tVertexFinder::L1Track> l1GTTTracks;
+  l1GTTTracks.reserve(l1GTTTrackInputHandle->size());
+  for (const auto& gttTrack : l1GTTTrackInputHandle->ptrs()) {
+    auto l1Gtttrack = L1Track(gttTrack);
+    if (l1Gtttrack.pt() >= settings_.vx_TrackMinPt()) {
+      l1GTTTracks.push_back(l1Gtttrack);
+    }
+  }
+
   std::vector<l1tVertexFinder::L1Track> l1Tracks;
   l1Tracks.reserve(l1TracksHandle->size());
   if (settings_.debug() > 1) {
@@ -111,7 +123,7 @@ void VertexProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::Event
                                    << settings_.vx_TrackMinPt() << " GeV";
   }
 
-  VertexFinder vf(l1Tracks, settings_);
+  VertexFinder vf(l1Tracks, l1GTTTracks, settings_);
 
   switch (settings_.vx_algo()) {
     case Algorithm::FastHisto: {

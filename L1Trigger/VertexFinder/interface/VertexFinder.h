@@ -26,8 +26,9 @@ namespace l1tVertexFinder {
   class VertexFinder {
   public:
     /// Constructor and destructor
-    VertexFinder(FitTrackCollection& fitTracks, const AlgoSettings& settings) {
+    VertexFinder(FitTrackCollection& fitTracks, FitTrackCollection& gttTracks, const AlgoSettings& settings) {
       fitTracks_ = fitTracks;
+      gttTracks_ = gttTracks;
       settings_ = &settings;
     }
     ~VertexFinder() {}
@@ -148,6 +149,7 @@ namespace l1tVertexFinder {
     RecoVertexCollection vertices_;
     l1t::VertexWordCollection verticesEmulation_;
     FitTrackCollection fitTracks_;
+    FitTrackCollection gttTracks_;
     unsigned int pvIndex_;
     unsigned int iterations_;
   };

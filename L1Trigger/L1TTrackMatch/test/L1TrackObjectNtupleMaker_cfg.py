@@ -50,15 +50,15 @@ process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:phase2_realistic', '')
 ############################################################
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
-# process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(100))
+# process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
 # root://xrootd-cms.infn.it//store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/F7BF4AED-51F1-9D47-B86D-6C3DDA134AB9.root
 readFiles = cms.untracked.vstring(
     # '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/F7BF4AED-51F1-9D47-B86D-6C3DDA134AB9.root'
-    '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/01816581-F04F-B849-83AA-38A348F9320B.root',
-    '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/075DCEC8-A2E9-7E48-A630-E1CBF89370A9.root',
-    '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/07EEAB60-C58E-6146-804B-6BA1B8E14875.root',
-    '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/09C2F689-B97E-6C44-94D2-C76445A4D703.root'
-    # 'file:/afs/cern.ch/work/b/benjamin/Data/F7BF4AED-51F1-9D47-B86D-6C3DDA134AB9.root'
+    # '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/01816581-F04F-B849-83AA-38A348F9320B.root',
+    # '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/075DCEC8-A2E9-7E48-A630-E1CBF89370A9.root',
+    # '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/07EEAB60-C58E-6146-804B-6BA1B8E14875.root',
+    # '/store/relval/CMSSW_11_1_0_pre2/RelValTTbar_14TeV/GEN-SIM-DIGI-RAW/PU25ns_110X_mcRun4_realistic_v2_2026D49PU200-v1/20000/09C2F689-B97E-6C44-94D2-C76445A4D703.root'
+    'file:/afs/cern.ch/work/b/benjamin/Data/F7BF4AED-51F1-9D47-B86D-6C3DDA134AB9.root'
 )
 secFiles = cms.untracked.vstring()
 
@@ -69,7 +69,8 @@ process.source = cms.Source ("PoolSource",
                             )
 
 
-process.TFileService = cms.Service("TFileService", fileName = cms.string('L1TObjNtuple_TTbar_NN.root'), closeFileFast = cms.untracked.bool(True))
+process.TFileService = cms.Service("TFileService", fileName = cms.string('L1TObjNtuple_TTbar_QNN.root'), closeFileFast = cms.untracked.bool(True))
+# process.TFileService = cms.Service("TFileService", fileName = cms.string('L1TObjNtuple_TTbar_FH.root'), closeFileFast = cms.untracked.bool(True))
 # process.TFileService = cms.Service("TFileService", fileName = cms.string('L1TObjNtuple_TTbar_FH_400.root'), closeFileFast = cms.untracked.bool(True))
 
 

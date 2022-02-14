@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 VertexProducer = cms.EDProducer('VertexProducer',
 
   l1TracksInputTag = cms.InputTag("TTTracksFromTrackletEmulation", "Level1TTTracks"),
+  l1GTTTrackInputTag = cms.InputTag("L1GTTInputProducer","Level1TTTracksConverted"),
   l1VertexCollectionName = cms.string("l1vertices"),
   mcTruthTrackInputTag = cms.InputTag("TTTrackAssociatorFromPixelDigis", "Level1TTTracks"),
   tpInputTag = cms.InputTag("mix", "MergedTrackTruth"),
@@ -72,20 +73,17 @@ VertexProducer = cms.EDProducer('VertexProducer',
         ## New CNN Options:
         GenVxSmear = cms.double(0.2),
         # Track weight graph CNN
-        # CNNTrackWeightGraph = cms.string("../../VertexFinder/data/cnnTrkWeight_v2.pb"),
         # CNNTrackWeightGraph = cms.string("../../VertexFinder/data/weightModelgraph.pb"),
-        # CNNTrackWeightGraph = cms.string("../../VertexFinder/data/Unquantised_model_weightModelgraph.pb"),        
-        CNNTrackWeightGraph = cms.string("Unquantised_model_weightModelgraph.pb"),        
+        CNNTrackWeightGraph = cms.string("weightModelgraph.pb"),
+        # CNNTrackWeightGraph = cms.string("Unquantised_model_weightModelgraph.pb"),        
         # Track position graph CNN
-        # CNNPVZ0Graph = cms.string("../../VertexFinder/data/cnnPVZ0_v2.pb"),
         # CNNPVZ0Graph = cms.string("../../VertexFinder/data/patternModelgraph.pb"),
-        # CNNPVZ0Graph = cms.string("../../VertexFinder/data/Unquantised_model_patternModelgraph.pb"),
-        CNNPVZ0Graph = cms.string("Unquantised_model_patternModelgraph.pb"),
+        CNNPVZ0Graph = cms.string("patternModelgraph.pb"),
+        # CNNPVZ0Graph = cms.string("Unquantised_model_patternModelgraph.pb"),
         # Associated tracks to vertex CNN
-        # CNNGraph = cms.string("../../VertexFinder/data/cnnTrkAssoc_v2.pb")
         # CNNGraph = cms.string("../../VertexFinder/data/asociationModelgraph.pb")
-        # CNNGraph = cms.string("../../VertexFinder/data/Unquantised_model_associationModelgraph.pb")
-        CNNGraph = cms.string("Unquantised_model_associationModelgraph.pb")
+        CNNGraph = cms.string("asociationModelgraph.pb")
+        # CNNGraph = cms.string("Unquantised_model_associationModelgraph.pb")
     ),
   # Debug printout
   debug  = cms.uint32(1)
