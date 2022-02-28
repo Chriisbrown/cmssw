@@ -1181,7 +1181,7 @@ namespace l1tVertexFinder {
           vxWeight += track.weight();
         }
       }
-      vertices.at(zbin).setZ0(z + binWidth/2);
+      vertices.at(zbin).setZ0(z + binWidth);
       // vertices.at(zbinPhalf).setZ0(z+0.5*binWidth);
       vertexMap[vxWeight]=zbin; //BRS: Warning: rare chance to have exactly the same non-zero floating key?
       // vertexMap[vxWeight]=zbinPhalf; //BRS: Warning: rare chance to have exactly the same non-zero floating key?
