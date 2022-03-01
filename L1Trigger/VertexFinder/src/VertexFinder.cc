@@ -1123,7 +1123,7 @@ namespace l1tVertexFinder {
       // Chris' Quantised Network: Use values from L1GTTInputProducer pT, MVA1, eta
       auto& gttTrack = gttTracks_.at(counter);
       int pTBit = gttTrack.getTTTrackPtr()->getRinvBits() < 16383 ? gttTrack.getTTTrackPtr()->getRinvBits() : gttTrack.getTTTrackPtr()->getRinvBits()-16384;
-      float etaBit = gttTrack.getTTTrackPtr()->getTanlBits() < 32767 ? (gttTrack.getTTTrackPtr()->getTanlBits()+32767)/2 : (gttTrack.getTTTrackPtr()->getTanlBits()-32767);
+      float etaBit = gttTrack.getTTTrackPtr()->getTanlBits() < 32767 ? (gttTrack.getTTTrackPtr()->getTanlBits()+32767) : (gttTrack.getTTTrackPtr()->getTanlBits()-32767);
       inputTrkWeight.tensor<float, 2>()(0, 0) = float(std::clamp(pTBit, 0, 512))/512.;
       inputTrkWeight.tensor<float, 2>()(0, 1) = gttTrack.MVA1()/8;
       // inputTrkWeight.tensor<float, 2>()(0, 1) = gttTrack.MVA1()/8.;
@@ -1250,7 +1250,7 @@ namespace l1tVertexFinder {
     // 1 top PV from BRS Chosen:
     // vertices_.emplace_back(vertices.at(pv->second));
     // 1 top PV from Chris' network:
-    vertices_.emplace_back(vertices.at(nnChosenPV->first).z0());
+    vertices_.emplace_back(vertices.at(nnChosenPV->first));
 
     // #### Run track association: ####
     cout << "Track Association " << endl;
@@ -1270,25 +1270,21 @@ namespace l1tVertexFinder {
           temp_z0 = track.z0() - 0.03;
 
       // Chris' Network: deltaZ, normed_trk_pt, trk_MVA1, trk_res
-      float pT = gttTrack.getTTTrackPtr()->getRinvBits();
-      float MVA = gttTrack.getTTTrackPtr()->getMVAQualityBits();
-      float Eta = gttTrack.getTTTrackPtr()->getTanlBits();
-
-      float rescaledpT = pT  < 16383. ? pT : pT - 16383.;
-      rescaledpT = rescaledpT > 512. ? 1.0 : rescaledpT/512.;
-      float rescaledMVA = MVA/8.;
-      float rescaledEta = Eta  < 32767. ? Eta + 32767. : Eta - 32767.;
-      rescaledEta = rescaledEta/65534.;
 
       auto up = std::upper_bound(eta_bins.begin(), eta_bins.end(), abs(track.eta()));
       int resbin = (up - eta_bins.begin() - 1);
 
       float dZ = abs(floor(((temp_z0 + 15.)/(binWidth))) - floor(((vertices.at(nnChosenPV->first).z0() + binWidth/2 + 15.)/(binWidth))))/128.;
-      
+
+      auto& gttTrack = gttTracks_.at(counter);
+      int pTBit = gttTrack.getTTTrackPtr()->getRinvBits() < 16383 ? gttTrack.getTTTrackPtr()->getRinvBits() : gttTrack.getTTTrackPtr()->getRinvBits()-16384;
+      float etaBit = gttTrack.getTTTrackPtr()->getTanlBits() < 32767 ? (gttTrack.getTTTrackPtr()->getTanlBits()+32767) : (gttTrack.getTTTrackPtr()->getTanlBits()-32767);
       inputAssoc.tensor<float, 2>()(0, 0) = dZ;
-      inputAssoc.tensor<float, 2>()(0, 1) = rescaledpT;
-      inputAssoc.tensor<float, 2>()(0, 2) = rescaledMVA; //BDT track quality
+      inputAssoc.tensor<float, 2>()(0, 1) = float(std::clamp(pTBit, 0, 512))/512.;
+      inputAssoc.tensor<float, 2>()(0, 2) =  = gttTrack.MVA1()/8;
       inputAssoc.tensor<float, 2>()(0, 3) = res_bins[resbin];
+      
+
 
       std::vector<tensorflow::Tensor> outputAssoc;
       // Run Association Network:
