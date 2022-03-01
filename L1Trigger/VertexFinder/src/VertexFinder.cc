@@ -1281,7 +1281,7 @@ namespace l1tVertexFinder {
       float etaBit = gttTrack.getTTTrackPtr()->getTanlBits() < 32767 ? (gttTrack.getTTTrackPtr()->getTanlBits()+32767) : (gttTrack.getTTTrackPtr()->getTanlBits()-32767);
       inputAssoc.tensor<float, 2>()(0, 0) = dZ;
       inputAssoc.tensor<float, 2>()(0, 1) = float(std::clamp(pTBit, 0, 512))/512.;
-      inputAssoc.tensor<float, 2>()(0, 2) =  = gttTrack.MVA1()/8;
+      inputAssoc.tensor<float, 2>()(0, 2) = gttTrack.MVA1()/8;
       inputAssoc.tensor<float, 2>()(0, 3) = res_bins[resbin];
       
 
