@@ -31,14 +31,14 @@ VertexProducer = cms.EDProducer('VertexProducer',
         # Do track quality cuts in emulation algorithms
         EM_DoQualityCuts = cms.bool(False),
         # Track-stubs Pt compatibility cut
-        FH_DoPtComp = cms.bool(True),
+        FH_DoPtComp = cms.bool(False),
         # chi2dof < 5 for tracks with Pt > 10
         FH_DoTightChi2 = cms.bool(False),
         # FastHisto algorithm histogram parameters (min,max,width) [cm]
         # TDR settings: [-14.95, 15.0, 0.1]
         # L1TkPrimaryVertexProducer: [-30.0, 30.0, 0.09983361065]
         # Firmware: [-14.4, 14.4, 0.4]
-        FH_HistogramParameters = cms.vdouble(-30.0, 30.0, 0.09983361065),
+        FH_HistogramParameters = cms.vdouble(-15.0, 14.8828125, 0.1171875),
         # The number of vertixes to return (i.e. N windows with the highest combined pT)
         # FH_NVtx = cms.uint32(10),
         FH_NVtx = cms.uint32(1),
@@ -55,34 +55,34 @@ VertexProducer = cms.EDProducer('VertexProducer',
         # DBSCAN min density tracks
         DBSCANMinDensityTracks = cms.uint32(2),
         # Minimum pt of tracks used to create vertex [GeV]
-        VxMinTrackPt = cms.double(2.0),
+        VxMinTrackPt = cms.double(1.9),
         # Maximum pt of tracks used to create vertex [GeV]
-        VxMaxTrackPt = cms.double(50.0),
+        VxMaxTrackPt = cms.double(512.0),
         # When the track pt > VxMaxTrackPt, how should the tracks be considered
         #   -1 = tracks are valid
         #   0 = tracks are mismeasured and ignored/truncated
         #   1 = tracks are mismeasured and saturate at VxMaxTrackPt
         # Option '0' was used for the TDR, but '1' is used for the firmware
-        VxMaxTrackPtBehavior = cms.int32(0),
+        VxMaxTrackPtBehavior = cms.int32(1),
         # Maximum chi2 of tracks used to create vertex
-        VxMaxTrackChi2 = cms.double(100.),
+        VxMaxTrackChi2 = cms.double(1000.),
         # Minimum number of stubs associated to a track
         VxMinNStub = cms.uint32(4),
         # Minimum number of stubs in PS modules associated to a track
-        VxMinNStubPS = cms.uint32(3),
+        VxMinNStubPS = cms.uint32(0),
         ## New CNN Options:
         GenVxSmear = cms.double(0.2),
         # Track weight graph CNN
         # CNNTrackWeightGraph = cms.string("../../VertexFinder/data/weightModelgraph.pb"),
-        CNNTrackWeightGraph = cms.string("weightModelgraph.pb"),
+        CNNTrackWeightGraph = cms.string("L1Trigger/VertexFinder/data/Quantised_model_prune_iteration_9_weightModelgraph.pb"),
         # CNNTrackWeightGraph = cms.string("Unquantised_model_weightModelgraph.pb"),        
         # Track position graph CNN
         # CNNPVZ0Graph = cms.string("../../VertexFinder/data/patternModelgraph.pb"),
-        CNNPVZ0Graph = cms.string("patternModelgraph.pb"),
+        CNNPVZ0Graph = cms.string("L1Trigger/VertexFinder/data/Quantised_model_prune_iteration_9_patternModelgraph.pb"),
         # CNNPVZ0Graph = cms.string("Unquantised_model_patternModelgraph.pb"),
         # Associated tracks to vertex CNN
         # CNNGraph = cms.string("../../VertexFinder/data/asociationModelgraph.pb")
-        CNNGraph = cms.string("asociationModelgraph.pb")
+        CNNGraph = cms.string("L1Trigger/VertexFinder/data/Quantised_model_prune_iteration_9_associationModelgraph.pb")
         # CNNGraph = cms.string("Unquantised_model_associationModelgraph.pb")
     ),
   # Debug printout

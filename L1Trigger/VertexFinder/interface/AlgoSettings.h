@@ -21,7 +21,8 @@ namespace l1tVertexFinder {
     HPV,
     Kmeans,
     Generator,
-    NN
+    NN,
+    NNEmulation
   };
 
   enum class Precision { Simulation, Emulation };
