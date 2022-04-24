@@ -225,7 +225,7 @@ public:
   double getChi2RZ() const { return chi2RZBins[getChi2RZBits()]; }
   double getBendChi2() const { return bendChi2Bins[getBendChi2Bits()]; }
   unsigned int getHitPattern() const { return getHitPatternBits(); }
-  unsigned int getMVAQuality() const { return mvaQualityBins[getMVAQualityBits()]; }
+  double getMVAQuality() const { return mvaQualityBins[getMVAQualityBits()]; }
   unsigned int getMVAOther() const { return getMVAOtherBits(); }
 
   // ----------member functions (setters) ------------

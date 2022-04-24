@@ -1123,12 +1123,11 @@ namespace l1tVertexFinder {
       // Chris' Quantised Network: Use values from L1GTTInputProducer pT, MVA1, eta
       auto& gttTrack = gttTracks_.at(counter);
       int pTBit = gttTrack.getTTTrackPtr()->getRinvBits() < 16383 ? gttTrack.getTTTrackPtr()->getRinvBits() : gttTrack.getTTTrackPtr()->getRinvBits()-16384;
-      float etaBit = gttTrack.getTTTrackPtr()->getTanlBits() < 32767 ? gttTrack.getTTTrackPtr()->getTanlBits() : 65535 - gttTrack.getTTTrackPtr()->getTanlBits();
+      float etaBit = gttTrack.getTTTrackPtr()->getTanlBits() < 32767 ? (gttTrack.getTTTrackPtr()->getTanlBits()+32767) : (gttTrack.getTTTrackPtr()->getTanlBits()-32767);
       inputTrkWeight.tensor<float, 2>()(0, 0) = float(std::clamp(pTBit, 0, 512))/512.;
-      inputTrkWeight.tensor<float, 2>()(0, 1) = gttTrack.getTTTrackPtr()->getMVAQualityBits()/8.;
+      inputTrkWeight.tensor<float, 2>()(0, 1) = gttTrack.MVA1()/8;
       // inputTrkWeight.tensor<float, 2>()(0, 1) = gttTrack.MVA1()/8.;
-      inputTrkWeight.tensor<float, 2>()(0, 2) = etaBit/65536.;
-      //std::cout << floor((gttTrack.getTTTrackPtr()->z0() + 15.)/( 30./256.)) << "," << float(std::clamp(pTBit, 0, 512))/512. << "," << gttTrack.getTTTrackPtr()->getMVAQualityBits()/8. << "," << etaBit/65536. << std::endl;
+      inputTrkWeight.tensor<float, 2>()(0, 2) = etaBit/65534.;
       // cout << "\t[" << counter << "]: "
       //       << " pt() = " << track.pt() 
       //       << " getRinvBits() = " << float(std::clamp(pTBit, 0, 4096))/4096.
@@ -1171,26 +1170,27 @@ namespace l1tVertexFinder {
     std::map<int, float> nnOutput;
 
     float binWidth = 30./256.;
-    
-
+    float temp_z0 = 0;
     // cout << " Filling inputPV" << endl;
     // Fill Histogram of 256 bins and input into NN
     for (float z = -15; z < 15.; z += binWidth) {
-      counter = 0;
       int zbin = floor((float)(((float)z + 15.)/((float)binWidth)));
       // int zbinPhalf = (int)(zbin+0.5*binWidth); // zbin plus half a binwidth
       float vxWeight = 0;
       for (const L1Track& track : fitTracks_) {
-        auto& gttTrack = gttTracks_.at(counter);
-
-        if (std::floor((gttTrack.getTTTrackPtr()->z0() + 15.)/binWidth) > zbin  && std::floor((gttTrack.getTTTrackPtr()->z0() + 15.)/binWidth ) <= (zbin + 1)) {
+        // Ad-hoc correction to z0 due to bias in +ve and -ve z0
+        if (track.z0() > 0.)
+          temp_z0 = track.z0() + 0.03;
+        else if (track.z0() < 0.)
+          temp_z0 = track.z0() - 0.03;
+        if (floor((temp_z0 + 15.)/binWidth) >= zbin  && floor((temp_z0 + 15.)/binWidth) < (zbin + 1)) {
           vertices.at(zbin).insert(&track);
           // vertices.at(zbinPhalf).insert(&track);
           vxWeight += track.weight();
         }
          ++counter;
       }
-      vertices.at(zbin).setZ0(z);
+      vertices.at(zbin).setZ0(z + binWidth);
       // vertices.at(zbinPhalf).setZ0(z+0.5*binWidth);
       vertexMap[vxWeight]=zbin; //BRS: Warning: rare chance to have exactly the same non-zero floating key?
       // vertexMap[vxWeight]=zbinPhalf; //BRS: Warning: rare chance to have exactly the same non-zero floating key?
@@ -1276,13 +1276,19 @@ namespace l1tVertexFinder {
     uint trackIt(0);
     for (L1Track& track : fitTracks_) {
       auto& gttTrack = gttTracks_.at(trackIt);
+      if (track.z0() > 0.)
+          temp_z0 = track.z0() + 0.03;
+        else if (track.z0() < 0.)
+          temp_z0 = track.z0() - 0.03;
 
       // Chris' Network: deltaZ, normed_trk_pt, trk_MVA1, trk_res
 
       auto up = std::upper_bound(eta_bins.begin(), eta_bins.end(), abs(track.eta()));
       int resbin = (up - eta_bins.begin() - 1);
 
-      float dZ = abs(std::floor(gttTrack.getTTTrackPtr()->getZ0Bits()/16.) - floor(((vertices.at(nnChosenPV->first).z0() + binWidth/2 + 15.)/(binWidth))))/128.;
+      float dZ = abs(floor(((temp_z0 + 15.)/(binWidth))) - floor(((vertices.at(nnChosenPV->first).z0() + binWidth/2 + 15.)/(binWidth))))/128.;
+
+      auto& gttTrack = gttTracks_.at(counter);
       int pTBit = gttTrack.getTTTrackPtr()->getRinvBits() < 16383 ? gttTrack.getTTTrackPtr()->getRinvBits() : gttTrack.getTTTrackPtr()->getRinvBits()-16384;
       float etaBit = gttTrack.getTTTrackPtr()->getTanlBits() < 32767 ? (gttTrack.getTTTrackPtr()->getTanlBits()+32767) : (gttTrack.getTTTrackPtr()->getTanlBits()-32767);
       inputAssoc.tensor<float, 2>()(0, 0) = dZ;

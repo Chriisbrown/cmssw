@@ -33,7 +33,11 @@ void mySmallText(Double_t x, Double_t y, Color_t color, char* text);
 TH1D* GetCumulative(TH1D* plot, int nevt);
 
 
-void Plotter(TString type1, TString type2){
+//Compile within ROOT console with .L vtxPlotter.C++
+// Run within ROOT as vtxPlotter("file1.root","file2.root")
+// Where file 1 has pv_L1reco filled by FH and file 2 is filled by NN
+
+void vtxPlotter(TString type1, TString type2){
 
     SetPlotStyle();
     char text[500];
@@ -185,12 +189,10 @@ void Plotter(TString type1, TString type2){
     gSystem->mkdir("VtxPlots");
     TString DIR = "VtxPlots/";
     
-
     //Reconstructed Z0 Plots
 
     h_PVMC->SetLineColor(4);
     h_PVReco_NN->SetLineColor(1);
-    h_PVReco_QNN->SetLineColor(8);
     h_PVReco_FH->SetLineColor(2);
 
     TLegend* l1 = new TLegend(0.2, 0.71, .3, .86);
@@ -198,7 +200,6 @@ void Plotter(TString type1, TString type2){
     l1->SetTextSize(0.03);
     l1->AddEntry(h_PVMC, "True", "l");
     l1->AddEntry(h_PVReco_NN, "NN", "l");
-    l1->AddEntry(h_PVReco_QNN, "QNN", "l");
     l1->AddEntry(h_PVReco_FH, "FH", "l");
 
     h_PVMC->GetXaxis()->SetTitle("z_{0}^{PV} [cm]");
@@ -212,7 +213,6 @@ void Plotter(TString type1, TString type2){
 
     h_PVMC->Draw("");
     h_PVReco_NN->Draw("same");
-    h_PVReco_QNN->Draw("same");
     h_PVReco_FH->Draw("same");
     l1->Draw("same");
     CMS_lumi( &c, 1, 11 );
@@ -227,25 +227,19 @@ void Plotter(TString type1, TString type2){
     float meanNN = h_NN_res->GetMean();
     float rmsNN = h_NN_res->GetRMS();
 
-    float meanQNN = h_QNN_res->GetMean();
-    float rmsQNN = h_QNN_res->GetRMS();
-
     gPad->SetLogy();
 
     h_FH_res->SetLineColor(1);
     h_NN_res->SetLineColor(2);
-    h_QNN_res->SetLineColor(8);
 
     TLegend* l2 = new TLegend(0.2, 0.76, .3, .86);
     l2->SetBorderSize(0);
     l2->SetTextSize(0.03);
     l2->AddEntry(h_FH_res, "FH", "l");
     l2->AddEntry(h_NN_res, "NN", "l");
-    l2->AddEntry(h_QNN_res, "QNN", "l");
 
     h_FH_res->Draw("");
     h_NN_res->Draw("same");
-    h_QNN_res->Draw("same");
     l2->Draw("same");
     CMS_lumi( &c, 1, 11 );
 
@@ -257,12 +251,8 @@ void Plotter(TString type1, TString type2){
     mySmallText(0.7, 0.82, 2, text);
     sprintf(text, "NN RMS: %.4f", rmsNN);
     mySmallText(0.7, 0.80, 2, text);
-    sprintf(text, "QNN Mean: %.4f", meanQNN);
-    mySmallText(0.7, 0.78, 8, text);
-    sprintf(text, "QNN RMS: %.4f", rmsQNN);
-    mySmallText(0.7, 0.76, 8, text);
     sprintf(text, "Num Entries: %i", FHnevt);
-    mySmallText(0.7, 0.74, 1, text);
+    mySmallText(0.7, 0.78, 1, text);
     CMS_lumi( &c, 1, 11 );
     c.SaveAs(DIR+"Res_Z0_logY.pdf");
 
@@ -272,18 +262,14 @@ void Plotter(TString type1, TString type2){
 
     h_FH_res_red->SetLineColor(1);
     h_NN_res_red->SetLineColor(2);
-    h_QNN_res_red->SetLineColor(8);
 
     Double_t xq[2];
     Double_t yq_FH[2];
     Double_t yq_NN[2];
-    Double_t yq_QNN[2];
     xq[0] = 0.32;
     xq[1] = 0.68;
     h_FH_res->GetQuantiles(2,yq_FH,xq);
     h_NN_res->GetQuantiles(2,yq_NN,xq);
-    h_QNN_res->GetQuantiles(2,yq_QNN,xq);
-
 
     float max2 = h_FH_res_red->GetMaximum();
     if (h_NN_res_red->GetMaximum() > max2)
@@ -295,13 +281,11 @@ void Plotter(TString type1, TString type2){
     l3->SetTextSize(0.03);
     l3->AddEntry(h_FH_res_red, "FH", "l");
     l3->AddEntry(h_NN_res_red, "NN", "l");
-    l3->AddEntry(h_QNN_res_red, "QNN", "l");
-
 
     h_FH_res_red->Draw("");
     h_NN_res_red->Draw("same");
-    h_QNN_res_red->Draw("same");
     l3->Draw("same");
+
     CMS_lumi( &c, 1, 11 );
     sprintf(text, "FH Mean: %.4f", meanFH);
     mySmallText(0.7, 0.86, 1, text);
@@ -311,12 +295,8 @@ void Plotter(TString type1, TString type2){
     mySmallText(0.7, 0.82, 2, text);
     sprintf(text, "NN Quartile: %.4f", yq_NN[1] - yq_NN[0]);
     mySmallText(0.7, 0.80, 2, text);
-    sprintf(text, "QNN Mean: %.4f", meanQNN);
-    mySmallText(0.7, 0.78, 8, text);
-    sprintf(text, "QNN Quartile: %.4f", yq_QNN[1] - yq_QNN[0]);
-    mySmallText(0.7, 0.76, 8, text);
     sprintf(text, "Num Entries: %i", FHnevt);
-    mySmallText(0.7, 0.74, 1, text);
+    mySmallText(0.7, 0.78, 1, text);
     CMS_lumi( &c, 1, 11 );
     c.SaveAs(DIR+"Res_Z0.pdf");
 
@@ -327,11 +307,6 @@ void Plotter(TString type1, TString type2){
     h_NN_err_vs_PV->Draw("colz");
     CMS_lumi( &c, 1, 11 );
     c.SaveAs(DIR+"PV_vs_NN_Res_Z0.pdf");
-
-    h_QNN_err_vs_PV->SetMinimum(0);
-    h_QNN_err_vs_PV->Draw("colz");
-    CMS_lumi( &c, 1, 11 );
-    c.SaveAs(DIR+"PV_vs_QNN_Res_Z0.pdf");
 
     h_FH_err_vs_PV->SetMinimum(0);
     h_FH_err_vs_PV->Draw("colz");
@@ -350,20 +325,10 @@ void Plotter(TString type1, TString type2){
     CMS_lumi( &c, 1, 11 );
     c.SaveAs(DIR+"PV_vs_NN_Z0.pdf");
 
-    h_QNN_vs_PV->SetMinimum(0);
-    h_QNN_vs_PV->Draw("colz");
-    CMS_lumi( &c, 1, 11 );
-    c.SaveAs(DIR+"PV_vs_QNN_Z0.pdf");
-
     h_NN_vtx_efficiency->SetMinimum(0);
     h_NN_vtx_efficiency->Draw("colz");
     CMS_lumi( &c, 1, 11 );
     c.SaveAs(DIR+"NN_vtx_efficiency.pdf");
-
-    h_QNN_vtx_efficiency->SetMinimum(0);
-    h_QNN_vtx_efficiency->Draw("colz");
-    CMS_lumi( &c, 1, 11 );
-    c.SaveAs(DIR+"QNN_vtx_efficiency.pdf");
 
     h_FH_vtx_efficiency->SetMinimum(0);
     h_FH_vtx_efficiency->Draw("colz");
@@ -381,42 +346,36 @@ void Plotter(TString type1, TString type2){
 
     TH1D* h_FH_vtx_efficiency_projection = h_FH_vtx_efficiency->ProjectionY("PY_FH",0,bin_threshold,"eo");
     TH1D* h_NN_vtx_efficiency_projection = h_NN_vtx_efficiency->ProjectionY("PY_NN",0,bin_threshold,"eo");
-    TH1D* h_QNN_vtx_efficiency_projection = h_QNN_vtx_efficiency->ProjectionY("PY_QNN",0,bin_threshold,"eo");
 
     TH1F* h_FH_vtx_efficiency_threshold = (TH1F*)h_FH_vtx_efficiency_projection->Clone();
     TH1F* h_NN_vtx_efficiency_threshold = (TH1F*)h_NN_vtx_efficiency_projection->Clone();
-    TH1F* h_QNN_vtx_efficiency_threshold = (TH1F*)h_QNN_vtx_efficiency_projection->Clone();
 
     h_FH_vtx_efficiency_threshold->Divide(h_FH_vtx_efficiency_threshold, h_PVMC, 1.0, 1.0, "B");
     h_NN_vtx_efficiency_threshold->Divide(h_NN_vtx_efficiency_threshold, h_PVMC, 1.0, 1.0, "B");
-    h_QNN_vtx_efficiency_threshold->Divide(h_QNN_vtx_efficiency_threshold, h_PVMC, 1.0, 1.0, "B");
 
     h_FH_vtx_efficiency_threshold->GetYaxis()->SetTitle("Vertex Matching Efficiency, threshold = " + t);
 
     h_FH_vtx_efficiency_threshold->SetLineColor(1);
     h_NN_vtx_efficiency_threshold->SetLineColor(2);
-    h_QNN_vtx_efficiency_threshold->SetLineColor(8);
     h_FH_vtx_efficiency_threshold->SetMarkerColor(1);
     h_NN_vtx_efficiency_threshold->SetMarkerColor(2);
-    h_QNN_vtx_efficiency_threshold->SetMarkerColor(8);
+
 
     h_FH_vtx_efficiency_threshold->SetMarkerStyle(20);
     h_FH_vtx_efficiency_threshold->SetMarkerSize(0.7);
     h_NN_vtx_efficiency_threshold->SetMarkerStyle(21);
     h_NN_vtx_efficiency_threshold->SetMarkerSize(0.7);
-    h_QNN_vtx_efficiency_threshold->SetMarkerStyle(21);
-    h_QNN_vtx_efficiency_threshold->SetMarkerSize(0.7);
 
     TLegend* l4 = new TLegend(0.2, 0.76, .3, .86);
     l4->SetBorderSize(0);
     l4->SetTextSize(0.03);
     l4->AddEntry(h_FH_vtx_efficiency_threshold, "FH", "p");
     l4->AddEntry(h_NN_vtx_efficiency_threshold, "NN", "p");
-    l4->AddEntry(h_QNN_vtx_efficiency_threshold, "QNN", "p");
+
 
     h_FH_vtx_efficiency_threshold->Draw("p");
     h_NN_vtx_efficiency_threshold->Draw("psame");
-    h_QNN_vtx_efficiency_threshold->Draw("psame");
+
     l4->Draw("same");
     CMS_lumi( &c, 1, 11 );
     c.SaveAs(DIR+"Vtx_finding_efficiency_zscan_"+s+".pdf");
@@ -426,38 +385,31 @@ void Plotter(TString type1, TString type2){
 
     TH1D* h_FH_vtx_efficiency_thres_projection = h_FH_vtx_efficiency->ProjectionX("PX_FH",0,-1,"eo");
     TH1D* h_NN_vtx_efficiency_thres_projection = h_NN_vtx_efficiency->ProjectionX("PX_NN",0,-1,"eo");
-    TH1D* h_QNN_vtx_efficiency_thres_projection = h_QNN_vtx_efficiency->ProjectionX("PX_QNN",0,-1,"eo");
 
     TH1D* h_FH_vtx_efficiency_z0 = GetCumulative(h_FH_vtx_efficiency_thres_projection,FHnevt);
     TH1D* h_NN_vtx_efficiency_z0 = GetCumulative(h_NN_vtx_efficiency_thres_projection,NNnevt);
-    TH1D* h_QNN_vtx_efficiency_z0 = GetCumulative(h_QNN_vtx_efficiency_thres_projection,QNNnevt);
+
 
     h_FH_vtx_efficiency_z0->GetYaxis()->SetTitle("Vertex Matching Efficiency");
 
     h_FH_vtx_efficiency_z0->SetLineColor(1);
     h_NN_vtx_efficiency_z0->SetLineColor(2);
-    h_QNN_vtx_efficiency_z0->SetLineColor(8);
     h_FH_vtx_efficiency_z0->SetMarkerColor(1);
     h_NN_vtx_efficiency_z0->SetMarkerColor(2);
-    h_QNN_vtx_efficiency_z0->SetMarkerColor(8);
 
     h_FH_vtx_efficiency_z0->SetMarkerStyle(20);
     h_FH_vtx_efficiency_z0->SetMarkerSize(0.7);
     h_NN_vtx_efficiency_z0->SetMarkerStyle(21);
     h_NN_vtx_efficiency_z0->SetMarkerSize(0.7);
-    h_QNN_vtx_efficiency_z0->SetMarkerStyle(21);
-    h_QNN_vtx_efficiency_z0->SetMarkerSize(0.7);
 
     TLegend* l5 = new TLegend(0.66, 0.2, .76, .3);
     l5->SetBorderSize(0);
     l5->SetTextSize(0.03);
     l5->AddEntry(h_FH_vtx_efficiency_z0, "FH", "p");
     l5->AddEntry(h_NN_vtx_efficiency_z0, "NN", "p");
-    l5->AddEntry(h_QNN_vtx_efficiency_z0, "QNN", "p");
 
     h_FH_vtx_efficiency_z0->Draw("p");
     h_NN_vtx_efficiency_z0->Draw("psame");
-    h_QNN_vtx_efficiency_z0->Draw("psame");
     l5->Draw("same");
     CMS_lumi( &c, 1, 11 );
     c.SaveAs(DIR+"Vtx_finding_efficiency_threshold_scan.pdf");

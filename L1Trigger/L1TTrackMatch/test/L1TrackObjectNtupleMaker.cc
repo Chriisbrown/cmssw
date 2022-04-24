@@ -845,8 +845,8 @@ void L1TrackObjectNtupleMaker::beginJob() {
     eventTree->Branch("trkExt_chi2rphi", &m_trkExt_chi2rphi);
     eventTree->Branch("trkExt_chi2rz", &m_trkExt_chi2rz);
     eventTree->Branch("trkExt_bendchi2", &m_trkExt_bendchi2);
-    eventTree->Branch("trkExt_MVA", &m_trkExt_MVA1);
-    eventTree->Branch("trkExt_MVA", &m_trkExt_MVA2);
+    eventTree->Branch("trkExt_MVA1", &m_trkExt_MVA1);
+    eventTree->Branch("trkExt_MVA2", &m_trkExt_MVA2);
     eventTree->Branch("trkExt_nstub", &m_trkExt_nstub);
     eventTree->Branch("trkExt_lhits", &m_trkExt_lhits);
     eventTree->Branch("trkExt_dhits", &m_trkExt_dhits);
@@ -925,8 +925,8 @@ void L1TrackObjectNtupleMaker::beginJob() {
     eventTree->Branch("matchtrkExt_chi2rphi", &m_matchtrkExt_chi2rphi);
     eventTree->Branch("matchtrkExt_chi2rz", &m_matchtrkExt_chi2rz);
     eventTree->Branch("matchtrkExt_bendchi2", &m_matchtrkExt_bendchi2);
-    eventTree->Branch("matchtrkExt_MVA", &m_matchtrkExt_MVA1);
-    eventTree->Branch("matchtrkExt_MVA", &m_matchtrkExt_MVA2);
+    eventTree->Branch("matchtrkExt_MVA1", &m_matchtrkExt_MVA1);
+    eventTree->Branch("matchtrkExt_MVA2", &m_matchtrkExt_MVA2);
     eventTree->Branch("matchtrkExt_nstub", &m_matchtrkExt_nstub);
     eventTree->Branch("matchtrkExt_lhits", &m_matchtrkExt_lhits);
     eventTree->Branch("matchtrkExt_dhits", &m_matchtrkExt_dhits);
@@ -2636,6 +2636,3 @@ void L1TrackObjectNtupleMaker::analyze(const edm::Event& iEvent, const edm::Even
 ///////////////////////////
 // DEFINE THIS AS A PLUG-IN
 DEFINE_FWK_MODULE(L1TrackObjectNtupleMaker);
-
-
-
