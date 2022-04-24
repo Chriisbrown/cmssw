@@ -1093,7 +1093,7 @@ namespace l1tVertexFinder {
     pvIndex_ = 0;
   }  // end of FastHistoEmulation
 
-    void VertexFinder::CNNPVZ0Algorithm(tensorflow::Session* cnnTrkSesh, tensorflow::Session* cnnPVZ0Sesh, tensorflow::Session* cnnAssSesh) {
+  void VertexFinder::CNNPVZ0Algorithm(tensorflow::Session* cnnTrkSesh, tensorflow::Session* cnnPVZ0Sesh, tensorflow::Session* cnnAssSesh) {
     // #### Weight Tracks: ####
     // Loop over tracks -> weight the network -> set track weights
     tensorflow::Tensor inputTrkWeight(tensorflow::DT_FLOAT, {1, 3});  //Single batch of 3 values
@@ -1344,22 +1344,11 @@ namespace l1tVertexFinder {
       inputTrkWeight.tensor<float, 2>()(0, 1) = gttTrack.getTTTrackPtr()->getMVAQualityBits()/8.;
       inputTrkWeight.tensor<float, 2>()(0, 2) = etaBit/1024.;
 
-     
-
-      
-      
       // CNN output: track weight
       std::vector<tensorflow::Tensor> outputTrkWeight;
       tensorflow::run(cnnTrkSesh, {{"weight:0", inputTrkWeight}}, {"Identity:0"}, &outputTrkWeight);
       // Set track weight pack into tracks:
       track.setWeight((double)outputTrkWeight[0].tensor<float, 2>()(0, 0));
-      //std::cout << std::floor((gttTrack.getTTTrackPtr()->z0() + 15.)/(30./256.)) << "," << float(std::clamp(pTBit, 0, 512))/512. << "," << gttTrack.getTTTrackPtr()->getMVAQualityBits()/8. << "," << etaBit/1024. << "," << (double)outputTrkWeight[0].tensor<float, 2>()(0, 0) << std::endl;
-      //track.setWeight(gttTrack.getTTTrackPtr()->momentum().transverse());
-
-      //std::cout << std::floor(gttTrack.getTTTrackPtr()->getZ0Bits()/16.) << " | " << gttTrack.getTTTrackPtr()->z0() << std::endl;
-      //std::cout << gttTrack.getTTTrackPtr()->phiSector() << " || " << pTBit*2 << " | " <<  gttTrack.getTTTrackPtr()->getMVAQualityBits()*128 << " | " << etaBit << " | " << (int)std::floor(gttTrack.getTTTrackPtr()->getZ0Bits()/16.) << " | " << outputTrkWeight[0].tensor<float, 2>()(0, 0) << "|" << (double)outputTrkWeight[0].tensor<float, 2>()(0, 0)*128. << endl;
-
-      //cout << gttTrack.getTTTrackPtr()->phiSector() << " | " << std::floor(gttTrack.getTTTrackPtr()->getZ0Bits()/16.) << " , " << outputTrkWeight[0].tensor<float, 2>()(0, 0)*128. << std::endl;
       ++counter;
     }
 
@@ -1385,17 +1374,9 @@ namespace l1tVertexFinder {
       for (const L1Track& track : fitTracks_) {
         auto& gttTrack = gttTracks_.at(counter);
         double temp_z0 = gttTrack.getTTTrackPtr()->z0();
-        //if (temp_z0 < 0) temp_z0 -= 0.03;
-        //if (temp_z0 > 0) temp_z0 += 0.03;
 
         track_z = std::floor((temp_z0 + 15.)/binWidth);
-        //track_z = std::floor(gttTrack.getTTTrackPtr()->getZ0Bits()/16.);
-        //std::cout << track_z << " | " << gttTrack.getTTTrackPtr()->z0() << " | " << gttTrack.getTTTrackPtr()->z0()*(1/binWidth);
-        //if (track_z > 127)
-        //  track_z -= 128;
-        //else
-        //  track_z += 128;
-        //std::cout << " | " << track_z << std::endl;
+
         if (track_z >= z  && track_z < (z + 1)) {
           vertices.at(z).insert(&track);
           vxWeight += track.weight();
@@ -1404,49 +1385,37 @@ namespace l1tVertexFinder {
       }
       
       vertices.at(z).setZ0( ((z + 0.5 ) * binWidth) - 15.);
-      //std::cout << "=================" << std::endl;
-      //std::cout << z << " | " << ( (z - 128) + 0.5 ) * binWidth << std::endl;
-      //std::cout << "=================" << std::endl;
-      // vertices.at(zbinPhalf).setZ0(z+0.5*binWidth);
+
       vertexMap[vxWeight]=z; //BRS: Warning: rare chance to have exactly the same non-zero floating key?
-      //std::cout << z << " _ " << vxWeight << std::endl;
       inputPV.tensor<float, 3>()(0, z, 0) = vxWeight;
       //Fill histogram for 3 bin sliding window:
       histogram[z]=vxWeight;
 
     }
 
-    float threeBinMax = 0;
-    float threeBinCentre = 0;
-    float threeBinPVZ = 0;
-    int maxBin = 0;
-    for (int bin=1; bin<((int) histogram.size()-1); ++bin){ // Sliding window when not at min/max of histogram
-      float threeBinSum = histogram[bin-1]+histogram[bin]+histogram[bin+1];
-      if (threeBinSum > threeBinMax) {
-        threeBinMax = threeBinSum;
-        threeBinCentre = histogram[bin];
-        //threeBinPVZ = (bin*binWidth)-15.;
-        maxBin=bin;
-        threeBinPVZ = ((bin+0.5)*binWidth)-15.;
-      }
-    }
+    // float threeBinMax = 0;
+    // float threeBinCentre = 0;
+    // float threeBinPVZ = 0;
+    // int maxBin = 0;
+    // for (int bin=1; bin<((int) histogram.size()-1); ++bin){ // Sliding window when not at min/max of histogram
+    //   float threeBinSum = histogram[bin-1]+histogram[bin]+histogram[bin+1];
+    //   if (threeBinSum > threeBinMax) {
+    //     threeBinMax = threeBinSum;
+    //     threeBinCentre = histogram[bin];
+    //     maxBin=bin;
+    //     threeBinPVZ = ((bin+0.5)*binWidth)-15.;
+    //   }
+    // }
 
     // Run PV Network:
-    // cout << " Running PV Network " << endl;
     tensorflow::run(cnnPVZ0Sesh, {{"hist:0", inputPV}}, {"Identity:0"}, &outputPV);
-    // cout << " PV Network has run" << endl;
-    // cout << " outputPV.size(): " << outputPV.size() << endl;
 
     for (int i(0);i<256;++i){
       nnOutput[i]=outputPV[0].tensor<float, 3>()(0, i, 0);
-      //cout << "\tOutputPV ["<<i<<"]: " << nnOutput[i]*128. << endl;
-      //cout << "\tinputPV ["<<i<<"]: " << inputPV.tensor<float, 3>()(0, i, 0) << endl;
     }
-    //for (int i(0);i<256;++i){
-    //  cout << "\tOutputPV ["<<i<<"]: " << nnOutput[i] << endl;
-    //}
 
 
+    //Find max then find all occurances of it in histogram and average their position -> python argmax layer 
     int max_index = 0;
     int num_maxes = 0;
     float max_element = 0.0;
@@ -1462,25 +1431,19 @@ namespace l1tVertexFinder {
         max_index += i;
       }
     }
-
-    std::cout << num_maxes << " | " << max_index << " | " << (float)max_index/(float)num_maxes << std::endl;
+    int PV_index = ceil((float)max_index/(float)num_maxes);
     // Argmax equivalent:
     auto nnChosenPV = std::max_element(nnOutput.begin(), nnOutput.end(),[](const pair<int, float>& p1, const pair<int, float>& p2) {return p1.second < p2.second;});
-    std::cout << " NN Chosen PV: prob: "<< nnChosenPV->second
-              << " bin = " << nnChosenPV->first
-              << " z0 = "  << vertices.at(nnChosenPV->first).z0()
-              << " Rescaled z0 = " << ((vertices.at(nnChosenPV->first).z0()+ 0.07704394)*0.9980201)
-              << " Better Argmax Bin = " << ceil( (float)max_index/(float)num_maxes)
-              << " Better Argmax z0 rescaled = " << ((vertices.at(ceil( (float)max_index/(float)num_maxes)).z0())*0.9980201) + 0.07704394
-              << " FH = "  << threeBinPVZ << " | " << threeBinMax << " | " << threeBinCentre << " | " << maxBin
+    std::cout << " NN Chosen PV: prob: "<< vertices.at(PV_index).pt()
+              << " bin = " << PV_index
+              << " z0 = "  << vertices.at(PV_index).z0()
+              //<< " FH = "  << threeBinPVZ << " | " << threeBinMax << " | " << threeBinCentre << " | " << maxBin
               << '\n';
 
     verticesEmulation_.emplace_back(1,
-                                    //(((((ceil( (float)max_index/(float)num_maxes))+0.5)*binWidth)-15.)*0.9980201 + 0.07704394),
-                                    (vertices.at( (float)max_index/(float)num_maxes)).z0(),
-                                    //((vertices.at(ceil( (float)max_index/(float)num_maxes)).z0())*0.9980201) + 0.07704394,
+                                    vertices.at(PV_index).z0(),
                                     0,
-                                    vertices.at(nnChosenPV->first).pt(),
+                                    vertices.at(PV_index).pt(),
                                     0,
                                     0,
                                     0);
