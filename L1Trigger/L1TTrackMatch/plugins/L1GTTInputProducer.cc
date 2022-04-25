@@ -453,7 +453,7 @@ void L1GTTInputProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::E
         currentTrackRef, ptBits, chargeBit, expectedPt, maxErrPercPt, maxErrEpsilonPt, minErrPercPt, minExpectedPt);
     error_eta_c += getEtaBits(currentTrackRef, etaBits, expectedEta, maxErrPercEta, maxErrEpsilonEta);
 
-    // Assign the exat same bits to an ap_uint 
+    // Assign the exat same bits to an ap_uint
     ptBitsShifted = ptBits.range();
     etaBitsShifted = etaBits.range();
 

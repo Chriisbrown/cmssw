@@ -1134,8 +1134,7 @@ namespace l1tVertexFinder {
       //       << " MVA1() = " << gttTrack.MVA1()
       //       << " MVA1()/8 = " << gttTrack.MVA1()/8.
       //       << " getTanlBits() = " << etaBit/32767.
-      //       << endl;
-      
+      //       << endl; 
       // CNN output: track weight
       std::vector<tensorflow::Tensor> outputTrkWeight;
       tensorflow::run(cnnTrkSesh, {{"weight:0", inputTrkWeight}}, {"Identity:0"}, &outputTrkWeight);
@@ -1148,13 +1147,6 @@ namespace l1tVertexFinder {
       //     << " MVA1: " << track.MVA1()
       //     << " eta: " << abs(track.eta())/2.4
       //     << "  outputTrkWeight[0].tensor<float, 2>()(0, 0): " << outputTrkWeight[0].tensor<float, 2>()(0, 0) << endl;
-      //cout << "Original: " << gttTrack.getTTTrackPtr()->phiSector() << " | " << std::floor(gttTrack.getTTTrackPtr()->getZ0Bits()/16.) << " || " << gttTrack.getTTTrackPtr()->getRinvBits() << " , " << gttTrack.getTTTrackPtr()->getMVAQualityBits() << " , " << gttTrack.getTTTrackPtr()->getTanlBits() << " , " << outputTrkWeight[0].tensor<float, 2>()(0, 0) << std::endl;
-      //cout << "Input Features: "  << gttTrack.getTTTrackPtr()->phiSector() << "| "<< float(std::clamp(pTBit, 0, 512))/512. << ',' << gttTrack.MVA1()/8 << ',' << etaBit/65534. << ',' << outputTrkWeight[0].tensor<float, 2>()(0, 0) << std::endl;
-      //cout << "Scaled Inputs: " << gttTrack.getTTTrackPtr()->phiSector() << "| "<< std::round((float(std::clamp(pTBit, 0, 512)))*2.)  << ',' << std::round((gttTrack.getTTTrackPtr()->getMVAQualityBits())*128.) << ',' << std::round((etaBit/64.)) << std::endl;
-      //cout << gttTrack.getTTTrackPtr()->phiSector() << " | " << gttTrack.getTTTrackPtr()->z0() << " , " << outputTrkWeight[0].tensor<float, 2>()(0, 0) << std::endl; 
-      //cout << gttTrack.getTTTrackPtr()->phiSector() << " | " << floor((float)((gttTrack.getTTTrackPtr()->z0() + 15.)/(30./256.))) << " , " << outputTrkWeight[0].tensor<float, 2>()(0, 0) << std::endl;
-      cout << gttTrack.getTTTrackPtr()->phiSector() << " | " << std::floor(gttTrack.getTTTrackPtr()->getZ0Bits()/16.) << " , " << outputTrkWeight[0].tensor<float, 2>()(0, 0)*128. << std::endl;
-      //cout << "=============================================" << endl;
       ++counter;
     }
 
@@ -1188,7 +1180,6 @@ namespace l1tVertexFinder {
           // vertices.at(zbinPhalf).insert(&track);
           vxWeight += track.weight();
         }
-         ++counter;
       }
       vertices.at(zbin).setZ0(z + binWidth);
       // vertices.at(zbinPhalf).setZ0(z+0.5*binWidth);
@@ -1200,7 +1191,6 @@ namespace l1tVertexFinder {
       inputPV.tensor<float, 3>()(0, zbin, 0) = vxWeight;
       //Fill histogram for 3 bin sliding window:
       histogram[zbin]=vxWeight;
-
     }
 
     // for (const auto& [f,s]:histogram) cout << "\thistogram: " << f << " " << s << endl;
@@ -1215,9 +1205,9 @@ namespace l1tVertexFinder {
       if (threeBinSum > threeBinMax) {
         threeBinMax = threeBinSum;
         threeBinCentre = histogram[bin];
-        //threeBinPVZ = (bin*binWidth)-15.;
+        threeBinPVZ = (bin*binWidth)-15.;
         maxBin=bin;
-        threeBinPVZ = ((bin+0.5)*binWidth)-15.;
+        //threeBinPVZ = ((bin+0.5)*binWidth)-15.;
       }
     }
     std::cout << " Fast Histo Approx Chosen PV: vxWeight = " << threeBinCentre << " zbin = " << maxBin << " z0 = " << threeBinPVZ << '\n';
@@ -1241,7 +1231,6 @@ namespace l1tVertexFinder {
     std::cout << " NN Chosen PV: prob: "<< nnChosenPV->second
               << " bin = " << nnChosenPV->first
               << " z0 = " << vertices.at(nnChosenPV->first).z0()
-              << " z0 transformed = " << (vertices.at(nnChosenPV->first).z0())
               // << ((nnChosenPV->first)*binWidth)-15.
               << '\n';
 
@@ -1261,8 +1250,7 @@ namespace l1tVertexFinder {
     // 1 top PV from BRS Chosen:
     // vertices_.emplace_back(vertices.at(pv->second));
     // 1 top PV from Chris' network:
-    vertices_.emplace_back(threeBinPVZ);
-    //vertices_.emplace_back(vertices.at(nnChosenPV->first));
+    vertices_.emplace_back(vertices.at(nnChosenPV->first));
 
     // #### Run track association: ####
     cout << "Track Association " << endl;
