@@ -129,9 +129,7 @@ private:
   bool SaveTrackJets;
   bool SaveTrackJetsEmulation;
   bool SaveTrackMET;
-
   bool SaveVertexEmulation;
-
 
   edm::InputTag L1TrackInputTag;               // L1 track collection
   edm::InputTag L1GTTTrackInputTag;               // L1 GTT track collection

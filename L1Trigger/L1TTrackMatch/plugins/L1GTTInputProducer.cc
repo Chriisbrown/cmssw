@@ -59,12 +59,12 @@ private:
   static constexpr unsigned int Npars4 = 4;
   static constexpr unsigned int Npars5 = 5;
   enum ConversionBitWidths {
-    kEtaMagSize = 3,//6,     // eta output magnitude size; MAG + FRAC should be <= kEtaInputSize
-    kEtaFracSize = 5,//10,    // eta output fraction size; MAG + FRAC should be <= kEtaInputSize
+    kEtaMagSize = 3,     // eta output magnitude size; MAG + FRAC should be <= kEtaInputSize
+    kEtaFracSize = 5,    // eta output fraction size; MAG + FRAC should be <= kEtaInputSize
     kEtaInputSize = 16,  // size of tan(lambda)
 
-    kPTMagSize = 7,//6,     // magnitude output size; MAG + FRAC should be <= kPTInputSize
-    kPTFracSize = 3,//9,    // fraction output size; MAG + FRAC should be <= kPTInputSize
+    kPTMagSize = 7,     // magnitude output size; MAG + FRAC should be <= kPTInputSize
+    kPTFracSize = 3,    // fraction output size; MAG + FRAC should be <= kPTInputSize
     kPTInputSize = 15,  // size of 1/R
 
     kEtaOutputSize = kEtaMagSize + kEtaFracSize,  // total bit width for eta
@@ -453,8 +453,7 @@ void L1GTTInputProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::E
         currentTrackRef, ptBits, chargeBit, expectedPt, maxErrPercPt, maxErrEpsilonPt, minErrPercPt, minExpectedPt);
     error_eta_c += getEtaBits(currentTrackRef, etaBits, expectedEta, maxErrPercEta, maxErrEpsilonEta);
 
-    // Assign the exat same bits to an ap_uint
-    
+    // Assign the exat same bits to an ap_uint 
     ptBitsShifted = ptBits.range();
     etaBitsShifted = etaBits.range();
 
@@ -464,9 +463,6 @@ void L1GTTInputProducer::produce(edm::StreamID, edm::Event& iEvent, const edm::E
 
     // Set the MSB for the pt to the sign of the incoming word
     ptBitsShifted.set(kPTInputSize - 1, chargeBit);
-
-    //std::cout << "Floating point: " << track.momentum().transverse() << " ptBits: " << ptBits.range() << " Signed PtBits: " << ptBitsShifted << std::endl;
-    //std::cout << "Floating point: " << track.momentum().eta() << " etaBits: " << etaBits.range()  << " Signed etaBits: " << etaBitsShifted << std::endl;
 
     // Set the correct bits based on the converted quanteties and the existing track word components
     currentTrackRef.setTrackWord(currentTrackRef.getValidWord(),

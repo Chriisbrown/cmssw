@@ -697,6 +697,7 @@ void L1FPGATrackProducer::produce(edm::Event& iEvent, const edm::EventSetup& iSe
 
     // set TTTrack word
     aTrack.setTrackWordBits();
+    
     // test track word
     //aTrack.testTrackWordBits();
 

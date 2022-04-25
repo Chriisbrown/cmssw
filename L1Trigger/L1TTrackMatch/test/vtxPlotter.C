@@ -366,6 +366,7 @@ void vtxPlotter(TString type1, TString type2){
     h_NN_vtx_efficiency_threshold->SetMarkerStyle(21);
     h_NN_vtx_efficiency_threshold->SetMarkerSize(0.7);
 
+
     TLegend* l4 = new TLegend(0.2, 0.76, .3, .86);
     l4->SetBorderSize(0);
     l4->SetTextSize(0.03);
@@ -401,6 +402,7 @@ void vtxPlotter(TString type1, TString type2){
     h_FH_vtx_efficiency_z0->SetMarkerSize(0.7);
     h_NN_vtx_efficiency_z0->SetMarkerStyle(21);
     h_NN_vtx_efficiency_z0->SetMarkerSize(0.7);
+
 
     TLegend* l5 = new TLegend(0.66, 0.2, .76, .3);
     l5->SetBorderSize(0);
