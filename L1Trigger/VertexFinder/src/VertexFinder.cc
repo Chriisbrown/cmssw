@@ -1134,14 +1134,14 @@ namespace l1tVertexFinder {
       //       << " MVA1() = " << gttTrack.MVA1()
       //       << " MVA1()/8 = " << gttTrack.MVA1()/8.
       //       << " getTanlBits() = " << etaBit/32767.
-      //       << endl; 
+      //       << endl;
+
+        
       // CNN output: track weight
       std::vector<tensorflow::Tensor> outputTrkWeight;
       tensorflow::run(cnnTrkSesh, {{"weight:0", inputTrkWeight}}, {"Identity:0"}, &outputTrkWeight);
       // Set track weight pack into tracks:
-      //track.setWeight(outputTrkWeight[0].tensor<float, 2>()(0, 0));
-      track.setWeight(gttTrack.getTTTrackPtr()->momentum().transverse());
-
+      track.setWeight(outputTrkWeight[0].tensor<float, 2>()(0, 0));
       // cout << "\t[" << counter << "]: "
       //     << " pT: " << pT
       //     << " MVA1: " << track.MVA1()
@@ -1219,8 +1219,8 @@ namespace l1tVertexFinder {
     // cout << " outputPV.size(): " << outputPV.size() << endl;
 
     for (int i(0);i<256;++i){
-      nnOutput[i]=inputPV.tensor<float, 3>()(0, i, 0);
-      cout << "\tinputPV ["<<i<<"]: " << inputPV.tensor<float, 3>()(0, i, 0) << endl;
+      nnOutput[i]=outputPV[0].tensor<float, 3>()(0, i, 0);
+      //cout << "\tinputPV ["<<i<<"]: " << inputPV.tensor<float, 3>()(0, i, 0) << endl;
     }
     // cout << " vertices.size(): " << vertices.size() << endl;
     // cout << " vertexMap.size(): " << vertexMap.size() << endl;
