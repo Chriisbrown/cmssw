@@ -1276,7 +1276,6 @@ namespace l1tVertexFinder {
 
       float dZ = abs(floor(((temp_z0 + 15.)/(binWidth))) - floor(((vertices.at(nnChosenPV->first).z0() + binWidth/2 + 15.)/(binWidth))))/128.;
 
-      auto& gttTrack = gttTracks_.at(counter);
       int pTBit = gttTrack.getTTTrackPtr()->getRinvBits() < 16383 ? gttTrack.getTTTrackPtr()->getRinvBits() : gttTrack.getTTTrackPtr()->getRinvBits()-16384;
       float etaBit = gttTrack.getTTTrackPtr()->getTanlBits() < 32767 ? (gttTrack.getTTTrackPtr()->getTanlBits()+32767) : (gttTrack.getTTTrackPtr()->getTanlBits()-32767);
       inputAssoc.tensor<float, 2>()(0, 0) = dZ;
