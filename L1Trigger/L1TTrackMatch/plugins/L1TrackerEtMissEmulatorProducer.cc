@@ -338,7 +338,7 @@ void L1TrackerEtMissEmulatorProducer::produce(edm::Event& iEvent, const edm::Eve
     edm::LogVerbatim("L1TrackerEtMissEmulatorProducer")
         << "====MET===\n"
         << "Integer MET: " << EtMiss.Et << "| Integer MET phi: " << EtMiss.Phi << "\n"
-        << "Float MET: " << (EtMiss.Et) * l1tmetemu::kStepMET
+        << "Float MET: " << (int)(EtMiss.Et) * l1tmetemu::kStepMET
         << "| Float MET phi: " << (float)tempPhi * l1tmetemu::kStepMETPhi - M_PI << "\n"
         << "# Tracks after Quality Cuts: " << num_quality_tracks << "\n"
         << "# Tracks Associated to Vertex: " << num_assoc_tracks << "\n"
