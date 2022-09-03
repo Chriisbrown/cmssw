@@ -8,7 +8,7 @@
 
 #include <cmath>
 #include <cstdint>
-#iniclude <filesystem>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <numeric>
