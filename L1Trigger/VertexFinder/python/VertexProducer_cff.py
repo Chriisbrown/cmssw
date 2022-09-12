@@ -57,7 +57,7 @@ VertexProducer = cms.EDProducer('VertexProducer',
         # Minimum pt of tracks used to create vertex [GeV]
         VxMinTrackPt = cms.double(1.9),
         # Maximum pt of tracks used to create vertex [GeV]
-        VxMaxTrackPt = cms.double(512.0),
+        VxMaxTrackPt = cms.double(127.0),
         # When the track pt > VxMaxTrackPt, how should the tracks be considered
         #   -1 = tracks are valid
         #   0 = tracks are mismeasured and ignored/truncated
@@ -78,7 +78,7 @@ VertexProducer = cms.EDProducer('VertexProducer',
         PVZ0Graph = cms.string("L1Trigger/VertexFinder/data/z0Corr/Quantised_model_prune_iteration_9_patternModelgraph.pb"),
         # Adhoc correction to track z0 to correct for upstream asymmetry in tracks:
         apply_z0Correction = cms.bool(True),
-        z0Correction = cms.double(-0.03)
+        z0Correction = cms.double(0.03)
         
     ),
   # Debug printout
