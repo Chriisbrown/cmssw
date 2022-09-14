@@ -1,4 +1,6 @@
 import FWCore.ParameterSet.Config as cms
+import os
+CMSSW_BASE = os.getenv('CMSSW_BASE')
 
 VertexProducer = cms.EDProducer('VertexProducer',
 
@@ -6,7 +8,7 @@ VertexProducer = cms.EDProducer('VertexProducer',
   l1VertexCollectionName = cms.string("l1vertices"),
   mcTruthTrackInputTag = cms.InputTag("TTTrackAssociatorFromPixelDigis", "Level1TTTracks"),
   tpInputTag = cms.InputTag("mix", "MergedTrackTruth"),
-
+  
 
   # === Vertex Reconstruction configuration
   VertexReconstruction = cms.PSet(
@@ -73,9 +75,9 @@ VertexProducer = cms.EDProducer('VertexProducer',
         VxMinNStubPS = cms.uint32(0),
         GenVxSmear = cms.double(0.2),
         # Track weight NN graph 
-        TrackWeightGraph = cms.string("L1Trigger/VertexFinder/data/z0Corr/Quantised_model_prune_iteration_9_weightModelgraph.pb"),
+        TrackWeightGraph = cms.string(CMSSW_BASE+"/src/L1Trigger/VertexFinder/data/z0Corr/Quantised_model_prune_iteration_9_weightModelgraph.pb"),
         # Track position NN graph
-        PVZ0Graph = cms.string("L1Trigger/VertexFinder/data/z0Corr/Quantised_model_prune_iteration_9_patternModelgraph.pb"),
+        PVZ0Graph = cms.string(CMSSW_BASE+"/src/L1Trigger/VertexFinder/data/z0Corr/Quantised_model_prune_iteration_9_patternModelgraph.pb"),
         # Adhoc correction to track z0 to correct for upstream asymmetry in tracks:
         apply_z0Correction = cms.bool(True),
         z0Correction = cms.double(0.03)
