@@ -9,6 +9,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "L1Trigger/VertexFinder/interface/AlgoSettings.h"
 #include "L1Trigger/VertexFinder/interface/RecoVertex.h"
+#include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
 
 #include <algorithm>
 #include <cmath>
@@ -130,6 +131,15 @@ namespace l1tVertexFinder {
     void computeAndSetVertexParameters(RecoVertex<>& vertex,
                                        const std::vector<float>& bin_centers,
                                        const std::vector<unsigned int>& counts);
+    /// Histogramming algorithm + cnn position
+    void NNVtx(tensorflow::Session* cnnTrkSesh = nullptr,
+               tensorflow::Session* cnnPVZ0Sesh = nullptr,
+               tensorflow::Session* AssociationSesh = nullptr);
+
+    void NNVtxEmulation(tensorflow::Session* cnnTrkSesh = nullptr,
+                        tensorflow::Session* cnnPVZ0Sesh = nullptr,
+                        tensorflow::Session* AssociationSesh = nullptr);
+
     /// DBSCAN algorithm
     void DBSCAN();
     /// High pT Vertex Algorithm
@@ -137,6 +147,7 @@ namespace l1tVertexFinder {
     /// Kmeans Algorithm
     void Kmeans();
     /// Find maximum distance in two clusters of tracks
+    void Generator(std::vector<const L1Track*>& pvTracks);
     void PVR();
 
   private:

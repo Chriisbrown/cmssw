@@ -29,6 +29,11 @@ namespace l1tVertexFinder {
         vx_dbscan_mintracks_(vertex_.getParameter<unsigned int>("DBSCANMinDensityTracks")),
         vx_kmeans_iterations_(vertex_.getParameter<unsigned int>("KmeansIterations")),
         vx_kmeans_nclusters_(vertex_.getParameter<unsigned int>("KmeansNumClusters")),
+        vx_smear_(vertex_.getParameter<double>("GenVxSmear")),
+        vx_trkw_graph_(vertex_.getParameter<std::string>("TrackWeightGraph")),
+        vx_pvz0_graph_(vertex_.getParameter<std::string>("PVZ0Graph")),
+        apply_z0Correction_(vertex_.getParameter<bool>("apply_z0Correction")),
+        z0Correction_(vertex_.getParameter<double>("z0Correction")),
         // Debug printout
         debug_(iConfig.getParameter<unsigned int>("debug")) {
     const std::string algoName(vertex_.getParameter<std::string>("Algorithm"));
@@ -64,7 +69,9 @@ namespace l1tVertexFinder {
       {"PVR", Algorithm::PVR},
       {"adaptive", Algorithm::adaptiveVertexReconstruction},
       {"HPV", Algorithm::HPV},
-      {"K-means", Algorithm::Kmeans}};
+      {"K-means", Algorithm::Kmeans},
+      {"Generator", Algorithm::Generator},
+      {"NNEmulation", Algorithm::NNEmulation}};
 
   const std::map<Algorithm, Precision> AlgoSettings::algoPrecisionMap = {
       {Algorithm::fastHisto, Precision::Simulation},
@@ -76,6 +83,8 @@ namespace l1tVertexFinder {
       {Algorithm::PVR, Precision::Simulation},
       {Algorithm::adaptiveVertexReconstruction, Precision::Simulation},
       {Algorithm::HPV, Precision::Simulation},
-      {Algorithm::Kmeans, Precision::Simulation}};
+      {Algorithm::Kmeans, Precision::Simulation},
+      {Algorithm::Generator, Precision::Simulation},
+      {Algorithm::NNEmulation, Precision::Emulation}};
 
 }  // end namespace l1tVertexFinder
