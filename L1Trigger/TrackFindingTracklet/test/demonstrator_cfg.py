@@ -24,8 +24,8 @@ process.load( 'L1Trigger.TrackFindingTracklet.Producer_cff' )
 #--- Load code that compares s/w with f/w
 process.load( 'L1Trigger.TrackFindingTracklet.Demonstrator_cff' )
 from L1Trigger.TrackFindingTracklet.Customize_cff import *
-#reducedConfig( process )
-fwConfig( process )
+reducedConfig( process )
+#fwConfig( process )
 
 # build schedule
 process.tt = cms.Sequence (  process.TrackerDTCProducer
@@ -33,7 +33,10 @@ process.tt = cms.Sequence (  process.TrackerDTCProducer
                            + process.TrackFindingTrackletProducerIRin
                            + process.TrackFindingTrackletProducerTBout
                            + process.TrackFindingTrackletProducerKFin
-                           + process.TrackFindingTrackletProducerKF
+                           + process.TrackFindingTrackletProducerKF 
+		           + process.TrackFindingTrackletProducerTT 
+                           + process.TrackFindingTrackletProducerAS
+		           + process.TrackFindingTrackletProducerKFout
                           )
 process.demo = cms.Path( process.tt + process.TrackerTFPDemonstrator )
 process.schedule = cms.Schedule( process.demo )
@@ -59,7 +62,7 @@ inputMC = [
 ]
 options.register( 'inputMC', inputMC, VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.string, "Files to be processed" )
 # specify number of events to process.
-options.register( 'Events',100,VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "Number of Events to analyze" )
+options.register( 'Events',10,VarParsing.VarParsing.multiplicity.singleton, VarParsing.VarParsing.varType.int, "Number of Events to analyze" )
 options.parseArguments()
 
 process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
