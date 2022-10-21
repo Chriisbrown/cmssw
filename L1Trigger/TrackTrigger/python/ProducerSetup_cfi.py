@@ -201,7 +201,7 @@ TrackTrigger_params = cms.PSet (
 
   # Parmeter specifying KalmanFilter
   KalmanFilter = cms.PSet (
-    NumWorker   = cms.int32 ( 2   ), # number of kf worker
+    NumWorker   = cms.int32 ( 1   ), # number of kf worker
     RangeFactor = cms.double( 2.0 ), # search window of each track parameter in initial uncertainties
     MinLayers   = cms.int32 ( 4   ), # required number of stub layers to form a track
     MaxLayers   = cms.int32 ( 7   )  # maximum number of  layers added to a track
@@ -209,15 +209,13 @@ TrackTrigger_params = cms.PSet (
 
   # Parmeter specifying KalmanFilter Output Formatter
   KalmanFilterOut = cms.PSet (
-    chi2rphiBins = cms.vdouble( 0, 0.25, 0.5, 1, 2, 3, 5, 7, 10, 20, 40, 100, 200, 500, 1000, 3000,6000 ), # Final Chi2rphi digitization TODO extract from TTTrack Word 
-    chi2rzBins   = cms.vdouble( 0, 0.25, 0.5, 1, 2, 3, 5, 7, 10, 20, 40, 100, 200, 500, 1000, 3000,6000 ), # Final Chi2rz digitization TODO extract from TTTrack Word 
-
     chi2rphiConv = cms.int32 ( 3 ), # Conversion factor between dphi^2/weight and chi2rphi
     chi2rzConv   = cms.int32 ( 13 ), # Conversion factor between dz^2/weight and chi2rz
 
     WeightBinFraction = cms.int32( 0 ), # Number of bits dropped from dphi and dz for v0 and v1 LUTs
 
-    TTTrackBits  = cms.int32( 96 )  # Number of bits for the tttrack word TODO extract from TTTrack_word dataformat
+    TrackQualityBDT_numBits = cms.int32(10), # Total number of bits used by input features for BDT
+    TrackQualityBDT_numIntBits = cms.int32(5) #Number of integer bits in ap_fixed for BDT input features
   ),
 
   # Parmeter specifying DuplicateRemoval

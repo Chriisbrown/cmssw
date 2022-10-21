@@ -1,6 +1,5 @@
 /*
 Track Quality Header file
-
 C.Brown 28/07/20
 */
 
@@ -19,15 +18,19 @@ C.Brown 28/07/20
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "DataFormats/L1TrackTrigger/interface/TTTrack.h"
+#include "DataFormats/L1TrackTrigger/interface/TTTrack_TrackWord.h"
 #include "DataFormats/L1TrackTrigger/interface/TTTypes.h"
 #include "L1Trigger/TrackTrigger/interface/HitPatternHelper.h"
 #include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
 #include <memory>
 
+#include "conifer.h" 
+#include "ap_fixed.h"
+
 class L1TrackQuality {
 public:
   // Enum class used for determining prediction behaviour in setL1TrackQuality
-  enum class QualityAlgorithm { Cut, GBDT, NN, None };
+  enum class QualityAlgorithm { Cut, GBDT, GBDT_cpp, NN, None };
 
   //Default Constructor
   L1TrackQuality();
@@ -44,6 +47,7 @@ public:
   // Passed by reference a track without MVA filled, method fills the track's MVA field
   void setL1TrackQuality(TTTrack<Ref_Phase2TrackerDigi_>& aTrack);
 
+  float runEmulatedTQ(std::vector<float> inputFeatures);
   // To set private member data
   void setCutParameters(std::string const& AlgorithmString,
                         float maxZ0,
@@ -59,6 +63,7 @@ public:
                     std::vector<std::string> const& featureNames);
 
   void beginRun(const hph::Setup* setup);
+  void beginRun();
 
 private:
   // Private Member Data
@@ -75,5 +80,7 @@ private:
   const hph::Setup* setupHPH_;
   bool useHPH_;
   std::unique_ptr<cms::Ort::ONNXRuntime> runTime_;
+
+
 };
 #endif

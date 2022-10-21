@@ -22,7 +22,6 @@ namespace trackerTFP {
 
   /*! \class  trackerTFP::AnalyzerDemonstrator
    *  \brief  Class to demontrate correctness of track trigger emulators
-   *          by comparing FW with SW
    *  \author Thomas Schuh
    *  \date   2020, Nov
    */
@@ -58,6 +57,8 @@ namespace trackerTFP {
     const Setup* setup_;
     //
     const Demonstrator* demonstrator_;
+
+    int ievt_ = 0;
   };
 
   AnalyzerDemonstrator::AnalyzerDemonstrator(const ParameterSet& iConfig) {
@@ -66,10 +67,15 @@ namespace trackerTFP {
     const string& labelOut = iConfig.getParameter<string>("LabelOut");
     const string& branchStubs = iConfig.getParameter<string>("BranchAcceptedStubs");
     const string& branchTracks = iConfig.getParameter<string>("BranchAcceptedTracks");
+
     edGetTokenStubsIn_ = consumes<StreamsStub>(InputTag(labelIn, branchStubs));
-    if (labelIn == "TrackerTFPProducerKFin" || labelIn == "TrackerTFPProducerKF")
+    if (labelOut != "TrackFindingTrackletProducerKFout")
+      edGetTokenStubsOut_ = consumes<StreamsStub>(InputTag(labelOut, branchStubs));
+    if (labelIn == "TrackerTFPProducerKFin" || labelIn == "TrackerTFPProducerKF" ||
+        labelIn == "TrackFindingTrackletProducerKFin" || labelIn == "TrackFindingTrackletProducerKF")
       edGetTokenTracksIn_ = consumes<StreamsTrack>(InputTag(labelIn, branchTracks));
-    if (labelOut == "TrackerTFPProducerKF" || labelOut == "TrackerTFPProducerDR")
+    if (labelOut == "TrackerTFPProducerKF" || labelOut == "TrackerTFPProducerDR" ||
+        labelOut == "TrackFindingTrackletProducerKF" || labelOut == "TrackFindingTrackletProducerKFout")
       edGetTokenTracksOut_ = consumes<StreamsTrack>(InputTag(labelOut, branchTracks));
     // book ES products
     esGetTokenSetup_ = esConsumes<Setup, SetupRcd, Transition::BeginRun>();
@@ -87,16 +93,13 @@ namespace trackerTFP {
   }
 
   void AnalyzerDemonstrator::analyze(const Event& iEvent, const EventSetup& iSetup) {
+
     vector<vector<Frame>> input;
     vector<vector<Frame>> output;
     convert(iEvent, edGetTokenTracksIn_, edGetTokenStubsIn_, input);
     convert(iEvent, edGetTokenTracksOut_, edGetTokenStubsOut_, output);
-    if (!demonstrator_->analyze(input, output)) {
-      cms::Exception exception("RunTimeError.");
-      exception.addContext("trackerTFP::AnalyzerDemonstrator::analyze");
-      exception << "Bit error detected.";
-      throw exception;
-    }
+    demonstrator_->analyze(ievt_,input, output);
+    ievt_++;
   }
 
   //

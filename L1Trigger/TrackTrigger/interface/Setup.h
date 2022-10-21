@@ -492,18 +492,17 @@ namespace tt {
 
     // Parameter specifying KalmanFilter Output Formatter
 
-    // Final Chi2rphi digitization TODO extract from TTTrack Word
-    std::vector<double> kfoutchi2rphiBins() const { return kfoutchi2rphiBins_; }
-    // Final Chi2rz digitization TODO extract from TTTrack Word
-    std::vector<double> kfoutchi2rzBins() const { return kfoutchi2rzBins_; }
     // Conversion factor between dphi^2/weight and chi2rphi
     int kfoutchi2rphiConv() const { return kfoutchi2rphiConv_; }
     // Conversion factor between dz^2/weight and chi2rz
     int kfoutchi2rzConv() const { return kfoutchi2rzConv_; }
-    // Number of bits for the tttrack word
-    int tttrackBits() const { return tttrackBits_; }
     // Fraction of total dphi and dz ranges to calculate v0 and v1 LUT for
     int weightBinFraction() const { return weightBinFraction_; }
+    
+    // Total number of bits used by input features for BDT
+    int TrackQualityBDT_numBits() const { return TrackQualityBDT_numBits_; }
+    // Number of integer bits in ap_fixed for BDT input features
+    int TrackQualityBDT_numIntBits() const { return TrackQualityBDT_numIntBits_; }
 
     // Parameter specifying DuplicateRemoval
 
@@ -893,27 +892,17 @@ namespace tt {
 
     // Parameter specifying KalmanFilter Output Formatter
     edm::ParameterSet pSetKFOut_;
-    // Bins used to digitize dPhi for chi2 calculation
-    std::vector<int> kfoutdPhiBins_;
-    // Bins used to digitize dZ for chi2 calculation
-    std::vector<int> kfoutdZBins_;
-    // v0 weight Bins corresponding to dPhi Bins for chi2 calculation
-    std::vector<int> kfoutv0Bins_;
-    // v1 weight Bins corresponding to dZ Bins for chi2 calculation
-    std::vector<int> kfoutv1Bins_;
-    // Final Chi2rphi digitization TODO extract from TTTrack Word
-    std::vector<double> kfoutchi2rphiBins_;
-    // Final Chi2rz digitization TODO extract from TTTrack Word
-    std::vector<double> kfoutchi2rzBins_;
     // Conversion factor between dphi^2/weight and chi2rphi
     int kfoutchi2rphiConv_;
     // Conversion factor between dz^2/weight and chi2rz
     int kfoutchi2rzConv_;
-    // Number of bits for the tttrack word
-    int tttrackBits_;
     // Fraction of total dphi and dz ranges to calculate v0 and v1 LUT for
     int weightBinFraction_;
-
+    // Total number of bits used by input features for BDT
+    int TrackQualityBDT_numBits_; 
+    // Number of integer bits in ap_fixed for BDT input features
+    int TrackQualityBDT_numIntBits_; 
+    
     // Parameter specifying DuplicateRemoval
     edm::ParameterSet pSetDR_;
     // internal memory depth

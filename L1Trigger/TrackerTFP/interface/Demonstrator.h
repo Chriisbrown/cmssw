@@ -22,18 +22,22 @@ namespace trackerTFP {
     Demonstrator(const edm::ParameterSet& iConfig, const tt::Setup* setup);
     ~Demonstrator() {}
     // plays input through modelsim and compares result with output
-    bool analyze(const std::vector<std::vector<tt::Frame>>& input,
+    bool analyze(int ievt, const std::vector<std::vector<tt::Frame>>& input,
                  const std::vector<std::vector<tt::Frame>>& output) const;
-
+  
   private:
     // converts streams of bv into stringstream
     void convert(const std::vector<std::vector<tt::Frame>>& bits, std::stringstream& ss) const;
     // plays stringstream through modelsim
-    void sim(const std::stringstream& ss) const;
+    void sim(int ievt, const std::stringstream& ss, std::string fname) const;
     // compares stringstream with modelsim output
-    bool compare(std::stringstream& ss) const;
+    bool compare(int ievt, std::stringstream& ss) const;
+    void convertNine(const std::vector<std::vector<tt::Frame>>& bits, std::stringstream& ss, std::vector<int> linkmap) const;
+    void convertNineInterleave(const std::vector<std::vector<tt::Frame>>& bits, std::stringstream& ss) const;
     // creates emp file header
+    std::string header(int numChannel,std::vector<int> linkmap) const;
     std::string header(int numChannel) const;
+
     // creates 6 frame gap between packets
     std::string infraGap(int& nFrame, int numChannel) const;
     // creates frame number
@@ -59,6 +63,9 @@ namespace trackerTFP {
     int numFramesInfra_;
     // number of TFPs per time node (9)
     int numRegions_;
+
+    int ievt_;
+
   };
 
 }  // namespace trackerTFP
