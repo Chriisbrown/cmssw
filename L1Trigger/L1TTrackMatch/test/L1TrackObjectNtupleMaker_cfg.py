@@ -109,7 +109,7 @@ process.load('L1Trigger.VertexFinder.VertexProducer_cff')
 process.L1VertexFinder = process.VertexProducer.clone()
 process.pPV = cms.Path(process.L1VertexFinder)
 process.L1VertexFinderEmulator = process.VertexProducer.clone()
-process.L1VertexFinderEmulator.VertexReconstruction.Algorithm = "fastHistoEmulation"
+process.L1VertexFinderEmulator.VertexReconstruction.Algorithm = "NNEmulation"
 process.L1VertexFinderEmulator.l1TracksInputTag = cms.InputTag("L1GTTInputProducer","Level1TTTracksConverted")
 process.pPVemu = cms.Path(process.L1VertexFinderEmulator)
 
