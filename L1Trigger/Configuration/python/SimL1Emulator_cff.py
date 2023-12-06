@@ -114,6 +114,7 @@ l1tCaloJetHTT = l1tCaloJetHTTProducer.clone(
 BXVCaloJetsInputTag = ("L1CaloJet", "CaloJets")
 )
 
+cut = "NN"
 
 _phase2_siml1emulator.add(l1tTowerCalibration)
 _phase2_siml1emulator.add(l1tCaloJet)
@@ -124,27 +125,21 @@ _phase2_siml1emulator.add(l1tCaloJetHTT)
 # ########################################################################
 from L1Trigger.L1TTrackMatch.l1tGTTInputProducer_cfi import *
 from L1Trigger.VertexFinder.l1tVertexProducer_cfi import *
-
-
-'''
-from L1Trigger.L1TTrackMatch.l1tTrackSelectionProducer_cfi import *
-l1NNTrackSelection = l1tTrackSelectionProducer.clone()
-l1NNTrackSelection.useAssociationNetwork = cms.bool(True)
-#l1NNTrackSelection.useTruth = cms.bool(True)
-l1NNTrackSelection.l1VerticesInputTag = ("l1tVertexFinder","l1vertices")
-l1NNTrackSelection.l1VerticesEmulationInputTag = ("l1tVertexFinder","l1vertices")
-#l1NNTrackSelection.l1VerticesEmulationInputTag = ("l1tVertexFinderEmulator", "l1verticesEmulation")
-l1NNTrackSelection.l1TracksInputTag = cms.InputTag("l1tTTTracksFromTrackletEmulation", "Level1TTTracks")
-'''
+from L1Trigger.TrackFindingTracklet.Producer_cfi import *
+# L1TRK_NAME  = TrackFindingTrackletProducer_params.LabelTT.value()
+# L1TRK_LABEL = TrackFindingTrackletProducer_params.BranchAcceptedTracks.value()
+L1TRK_NAME  = "l1tTTTracksFromTrackletEmulation"
+L1TRK_LABEL = "Level1TTTracks"
+l1tGTTInputProducer.l1TracksInputTag = cms.InputTag(L1TRK_NAME,L1TRK_LABEL)
 l1tVertexFinder = l1tVertexProducer.clone()
 l1tVertexFinderEmulator = l1tVertexProducer.clone()
-#l1tVertexFinderEmulator.VertexReconstruction.Algorithm = "fastHistoEmulation"
-l1tVertexFinderEmulator.VertexReconstruction.Algorithm = "NNEmulation"
-l1tVertexFinderEmulator.l1TracksInputTag = ("l1tGTTInputProducer","Level1TTTracksConverted")
-_phase2_siml1emulator.add(l1tVertexFinder)
-_phase2_siml1emulator.add(l1tVertexProducer)
-#_phase2_siml1emulator.add(l1tTrackSelectionProducer)
-#_phase2_siml1emulator.add(l1NNTrackSelection)
+if cut == "FH":
+    l1tVertexFinderEmulator.VertexReconstruction.Algorithm = "fastHistoEmulation"
+if cut == "Truth":
+    l1tVertexFinderEmulator.VertexReconstruction.Algorithm = "fastHistoEmulation"
+if cut == "NN":
+    l1tVertexFinderEmulator.VertexReconstruction.Algorithm = "NNEmulation"#"NNEmulation"
+
 _phase2_siml1emulator.add(l1tGTTInputProducer)
 _phase2_siml1emulator.add(l1tGTTInputProducerExtended)
 _phase2_siml1emulator.add(l1tVertexFinderEmulator)
@@ -167,99 +162,69 @@ _phase2_siml1emulator.add( l1tSAMuonsGmt )
 l1tTkMuonsGmtLowPtFix = l1tGMTFilteredMuons.clone()
 _phase2_siml1emulator.add( l1tTkMuonsGmtLowPtFix )
 
-# Tracker Objects
-# ########################################################################
-from L1Trigger.L1TTrackMatch.l1tTrackJets_cfi import *
-from L1Trigger.L1TTrackMatch.l1tTrackFastJets_cfi import *
-from L1Trigger.L1TTrackMatch.l1tTrackerEtMiss_cfi import *
-from L1Trigger.L1TTrackMatch.l1tTrackerHTMiss_cfi import *
-# make the input tags consistent with the choice L1VertexFinder above
-l1tTrackJets.L1PVertexCollection = ("l1tVertexFinder", "l1vertices")
-l1tTrackFastJets.L1PrimaryVertexTag = ("l1tVertexFinder", "l1vertices")
-l1tTrackJetsExtended.L1PVertexCollection = ("l1tVertexFinder", "l1vertices")
-#l1tTrackerEtMiss.L1VertexInputTag = ("l1tVertexFinder", "l1vertices")
-#l1tTrackerEtMissExtended.L1VertexInputTag = ("l1tVertexFinder", "l1vertices")
-
-from L1Trigger.L1TTrackMatch.l1tTrackSelectionProducer_cfi import *
-_phase2_siml1emulator.add(l1tTrackSelectionProducer)
-_phase2_siml1emulator.add(l1tTrackSelectionProducerExtended)
-
-_phase2_siml1emulator.add(l1tTrackJets)
-_phase2_siml1emulator.add(l1tTrackJetsExtended)
-_phase2_siml1emulator.add(l1tTrackFastJets)
-_phase2_siml1emulator.add(l1tTrackerEtMiss)
-_phase2_siml1emulator.add(l1tTrackerHTMiss)
-
-#Emulated tracker objects
-from L1Trigger.L1TTrackMatch.l1tTrackJetsEmulation_cfi import *
-_phase2_siml1emulator.add(l1tTrackJetsEmulation)
-_phase2_siml1emulator.add(l1tTrackJetsExtendedEmulation)
-
-from L1Trigger.L1TTrackMatch.l1tTrackerEmuEtMiss_cfi import *
-l1tTrackerEmuEtMiss.L1VertexInputTag = ("l1tVertexFinderEmulator","l1verticesEmulation")
-_phase2_siml1emulator.add(l1tTrackerEmuEtMiss)
-
-from L1Trigger.L1TTrackMatch.l1tTrackerEmuHTMiss_cfi import *
-_phase2_siml1emulator.add(l1tTrackerEmuHTMiss)
-_phase2_siml1emulator.add(l1tTrackerEmuHTMissExtended)
-
 # PF Candidates
 # ########################################################################
-'''
-from L1Trigger.Phase2L1ParticleFlow.l1tPFTracksFromL1Tracks_cfi import *
-l1tPFTracksFromL1Tracks.L1TrackTag = cms.InputTag("l1NNTrackSelection", "Level1TTTracksSelectedAssociated")
-l1tPFTracksFromL1TracksExtended.L1TrackTag = cms.InputTag("l1NNTrackSelection", "Level1TTTracksSelectedAssociated")
-_phase2_siml1emulator.add(l1tPFTracksFromL1Tracks)
-'''
+
 from L1Trigger.Phase2L1ParticleFlow.l1ctLayer1_cff import *
 from L1Trigger.Phase2L1ParticleFlow.l1ctLayer2EG_cff import *
 _phase2_siml1emulator.add(L1TLayer1TaskInputsTask, L1TLayer1Task, L1TLayer2EGTask)
 
-# PF Jet
-# ########################################################################
-# Describe here l1PFJets_a_la_Phase1 Task
-# ###############################
-from L1Trigger.L1CaloTrigger.Phase1L1TJets_9x9_cff import *
-L1TPFJetsPhase1Task_9x9 = cms.Task( l1tPhase1JetProducer9x9, l1tPhase1JetCalibrator9x9, l1tPhase1JetSumsProducer9x9)
-_phase2_siml1emulator.add(L1TPFJetsPhase1Task_9x9)
-
-from L1Trigger.L1CaloTrigger.Phase1L1TJets_9x9trimmed_cff import *
-L1TPFJetsPhase1Task_9x9trimmed = cms.Task( l1tPhase1JetProducer9x9trimmed, l1tPhase1JetCalibrator9x9trimmed, l1tPhase1JetSumsProducer9x9trimmed)
-_phase2_siml1emulator.add(L1TPFJetsPhase1Task_9x9trimmed)
-
-from L1Trigger.Phase2L1Taus.HPSPFTauProducerPF_cfi import *
-_phase2_siml1emulator.add(l1tHPSPFTauProducerPF)
-
-from L1Trigger.Phase2L1Taus.HPSPFTauProducerPuppi_cfi import *
-_phase2_siml1emulator.add(l1tHPSPFTauProducerPuppi)
-
 # PF MET
 # ########################################################################
-from L1Trigger.Phase2L1ParticleFlow.l1pfJetMet_cff import *
+from L1Trigger.L1TTrackMatch.l1tTrackSelectionProducer_cfi import *
+from L1Trigger.Phase2L1ParticleFlow.l1tPFTracksFromL1Tracks_cfi import * 
+# Track selection from no cut,  FH dZ cuts or NN association
+l1tTrackSelectionProducer.cutSet = cms.PSet(ptMin = cms.double(2.0), # pt must be greater than this value, [GeV]
+                                             absEtaMax = cms.double(2.4), # absolute value of eta must be less than this value
+                                             absZ0Max = cms.double(15.0), # z0 must be less than this value, [cm]
+                                             nStubsMin = cms.int32(4), # number of stubs must be greater than or equal to this value
+                                             nPSStubsMin = cms.int32(0), # the number of stubs in the PS Modules must be greater than or equal to this value
 
-_phase2_siml1emulator.add(L1TPFJetsEmulationTask)
+                                             reducedBendChi2Max = cms.double(10000), # bend chi2 must be less than this value
+                                             reducedChi2RZMax = cms.double(10000), # chi2rz/dof must be less than this value
+                                             reducedChi2RPhiMax = cms.double(10000), # chi2rphi/dof must be less than this value
+
+                                             deltaZMaxEtaBounds = cms.vdouble(0.0, 0.7, 1.0, 1.2, 1.6, 2.0, 2.4), # these values define the bin boundaries in |eta|
+                                             deltaZMax = cms.vdouble(30, 30, 30, 30, 30, 30), # delta z must be less than these values, there will be one less value here than in deltaZMaxEtaBounds, [cm]
+                                             )
+
+if cut == "FH":
+    l1tTrackSelectionProducer.l1TracksInputTag = cms.InputTag(L1TRK_NAME, L1TRK_LABEL)
+    l1tTrackSelectionProducer.processSimulatedTracks = cms.bool(True)
+    l1tTrackSelectionProducer.processEmulatedTracks = cms.bool(False)
+if cut == "Truth":
+    l1tTrackSelectionProducer.l1TracksInputTag = cms.InputTag(L1TRK_NAME, L1TRK_LABEL)
+    l1tTrackSelectionProducer.processSimulatedTracks = cms.bool(False)
+    l1tTrackSelectionProducer.processEmulatedTracks = cms.bool(True)
+    l1tTrackSelectionProducer.useTruth = cms.bool(True)
+if cut == "NN":
+    l1tTrackSelectionProducer.l1TracksInputTag = cms.InputTag("l1tGTTInputProducer", "Level1TTTracksConverted")
+    l1tTrackSelectionProducer.processSimulatedTracks = cms.bool(False)
+    l1tTrackSelectionProducer.processEmulatedTracks = cms.bool(True)
+    l1tTrackSelectionProducer.useAssociationNetwork = cms.bool(True) #Enable Association Network
+    l1tTrackSelectionProducer.AssociationThreshold = cms.double(0.1) #Association Network threshold for PV tracks
+
+# Standard PUPPI Quality Cuts
+if cut == "NN":
+    l1tPFTracksFromL1Tracks.L1TrackTag = cms.InputTag("l1tTrackSelectionProducer", "Level1TTTracksSelectedAssociatedEmulation")
+    l1tPFTracksFromL1TracksExtended.L1TrackTag = cms.InputTag("l1tTrackSelectionProducerExtended", "Level1TTTracksExtendedSelectedAssociatedEmulation")
+    l1tPFTracksFromL1Tracks.qualityBits = cms.vstring(
+        "momentum.perp > 2 && getStubRefs.size >= 4",
+        "momentum.perp > 2 && getStubRefs.size >= 4", # historical reasons
+        "momentum.perp > 2 && getStubRefs.size >= 4"
+    )
+
+else:
+    l1tPFTracksFromL1Tracks.L1TrackTag = cms.InputTag("l1tTrackSelectionProducer", "Level1TTTracksSelectedAssociatedEmulation")
+    l1tPFTracksFromL1TracksExtended.L1TrackTag = cms.InputTag("l1tTrackSelectionProducerExtended", "Level1TTTracksExtendedSelectedAssociatedEmulation")
+
+_phase2_siml1emulator.add(l1tTrackSelectionProducer)
+_phase2_siml1emulator.add(l1tTrackSelectionProducerExtended)
+_phase2_siml1emulator.add(l1tPFTracksFromL1Tracks)
 
 from L1Trigger.Phase2L1ParticleFlow.l1tMETPFProducer_cfi import *
 _phase2_siml1emulator.add(l1tMETPFProducer)
 
-from L1Trigger.Phase2L1ParticleFlow.l1tPFTracksFromL1Tracks_cfi import * 
-l1tPFTracksFromL1Tracks.L1TrackTag = cms.InputTag("l1tTrackSelectionProducer", "Level1TTTracksSelectedAssociated")
-l1tPFTracksFromL1TracksExtended.L1TrackTag = cms.InputTag("l1tTrackSelectionProducerExtended", "Level1TTTracksExtendedSelectedAssociated")
-_phase2_siml1emulator.add(l1tPFTracksFromL1Tracks)
-
-# NNTaus
-# ########################################################################
-from L1Trigger.Phase2L1ParticleFlow.L1NNTauProducer_cff import *
-_phase2_siml1emulator.add(l1tNNTauProducerPuppi)
-
-
-# BJets
-# ########################################################################
-from L1Trigger.Phase2L1ParticleFlow.L1BJetProducer_cff import *
-_phase2_siml1emulator.add(L1TBJetsTask)
-
-
 # --> add modules
 from Configuration.Eras.Modifier_phase2_trigger_cff import phase2_trigger
 phase2_trigger.toReplaceWith( SimL1EmulatorTask , _phase2_siml1emulator)
-

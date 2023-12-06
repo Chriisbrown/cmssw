@@ -61,6 +61,8 @@
 #include "FWCore/Utilities/interface/StreamID.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
 #include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
+#include "SimTracker/TrackTriggerAssociation/interface/TTTrackAssociationMap.h"
+#include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
 
 //
 // class declaration
@@ -89,6 +91,7 @@ private:
   typedef edm::Ref<TTTrackCollection> TTTrackRef;
   typedef edm::RefVector<TTTrackCollection> TTTrackRefCollection;
   typedef std::unique_ptr<TTTrackRefCollection> TTTrackRefCollectionUPtr;
+  typedef edm::Handle<TTTrackAssociationMap<Ref_Phase2TrackerDigi_> > TruthHandle;
 
   // ----------member functions ----------------------
   void printDebugInfo(const TTTrackCollectionHandle& l1TracksHandle,
@@ -160,7 +163,7 @@ private:
         : absZ0Max_(cfg.template getParameter<double>("absZ0Max")) {}
     bool operator()(const L1Track& t) const {
       double floatZ0 = t.undigitizeSignedValue(
-          t.getZ0Bits(), TTTrack_TrackWord::TrackBitWidths::kZ0Size, TTTrack_TrackWord::stepZ0, 0.0);
+          t.getZ0Bits(), TTTrack_TrackWord::TrackBitWidths::kZ0Size, TTTrack_TrackWord::stepZ0);
       return std::abs(floatZ0) <= absZ0Max_;
     }
 
@@ -273,22 +276,7 @@ private:
       float eta_deltaz = t.momentum().eta();
       float phi_deltaz = t.momentum().phi();
       float z0_deltaz = t.POCA().z();  //cm
-
-      std::cout << "Track input in delta z selection module: " << std::endl;
-      std::cout << "Track pt = " << pt_deltaz << std::endl;
-      std::cout << "Track eta = " << eta_deltaz << std::endl;
-      std::cout << "Track phi = " << phi_deltaz << std::endl;
-      std::cout << "Track z0 = " << z0_deltaz << std::endl;
-
-      std::ofstream deltazinputtrackcheck2("deltazinputtrackcheck_new8.txt", std::ios::app);
-      deltazinputtrackcheck2 <<"Track pt = "<< pt_deltaz <<std::endl;
-      deltazinputtrackcheck2 <<"Track eta = "<< eta_deltaz <<std::endl;
-      deltazinputtrackcheck2 <<"Track phi = "<< phi_deltaz <<std::endl;
-      deltazinputtrackcheck2 <<"Track z0 = "<< z0_deltaz <<std::endl;
       
-      deltazinputtrackcheck2.close();
-      
-
       size_t etaIndex =
           std::upper_bound(deltaZMaxEtaBounds_.begin(), deltaZMaxEtaBounds_.end(), std::abs(t.momentum().eta())) -
           deltaZMaxEtaBounds_.begin() - 1;
@@ -317,7 +305,7 @@ private:
       if (etaIndex > deltaZMax_.size() - 1)
         etaIndex = deltaZMax_.size() - 1;
       l1t::VertexWord::vtxz0_t fixedTkZ0 = t.undigitizeSignedValue(
-          t.getZ0Bits(), TTTrack_TrackWord::TrackBitWidths::kZ0Size, TTTrack_TrackWord::stepZ0, 0.0);
+          t.getZ0Bits(), TTTrack_TrackWord::TrackBitWidths::kZ0Size, TTTrack_TrackWord::stepZ0);
 
       ap_uint<TrackBitWidths::kPtSize> ptEmulationBits = t.getTrackWord()(
           TTTrack_TrackWord::TrackBitLocations::kRinvMSB - 1, TTTrack_TrackWord::TrackBitLocations::kRinvLSB);
@@ -329,6 +317,21 @@ private:
   private:
     std::vector<double> deltaZMaxEtaBounds_;
     std::vector<double> deltaZMax_;
+  };
+
+
+  struct TruthSelector {
+    TruthSelector() {}
+    bool associate(const L1Track& t, TruthHandle tph, TTTrackCollectionHandle th, int iTrack) const {
+      edm::Ptr<TTTrack<Ref_Phase2TrackerDigi_> > l1track_ptr(th, iTrack);
+      edm::Ptr<TrackingParticle> my_tp = tph->findTrackingParticlePtr(l1track_ptr);
+      int tmp_eventid = 1;
+      if (my_tp.isNull() == false) {
+        tmp_eventid = my_tp->eventId().event();
+        }
+      return tmp_eventid <= 0;
+    }
+
   };
 
   struct NNTrackSelector {
@@ -346,12 +349,10 @@ private:
           res_bins_(AssociationNetworkZ0ResBins) {}
 
     template <typename VertexType>
-    bool associate(const L1Track& t, const VertexType& v) const {
+    bool associateEmu(const L1Track& t, const VertexType& v) const {
+
       tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {1, 4});
       std::vector<tensorflow::Tensor> outputAssoc;
-
-      tensorflow::Tensor inputAssoc_test(tensorflow::DT_FLOAT, {1, 4});
-      std::vector<tensorflow::Tensor> outputAssoc_test;
 
       TTTrack_TrackWord::tanl_t etaEmulationBits = t.getTanlWord();
       ap_fixed<16, 3> etaEmulation;
@@ -394,76 +395,74 @@ private:
       ap_ufixed<16, 5> NNOutput;
       NNOutput = (double)outputAssoc[0].tensor<float, 2>()(0, 0) ; 
 
-      
-      std::cout<<"inputAssoc(0,0)(ptEmulation_rescale) = "<< inputAssoc.tensor<float, 2>()(0,0)<<std::endl;
-      std::cout<<"inputAssoc(0,1)(MVAEmulation_rescale) = "<< inputAssoc.tensor<float, 2>()(0,1)<<std::endl;
-      std::cout<<"inputAssoc(0,2)(resBinEmulation_rescale) = "<< inputAssoc.tensor<float, 2>()(0,2)<<std::endl;
-      std::cout<<"inputAssoc(0,3)(dzEmulation_rescale) = "<< inputAssoc.tensor<float, 2>()(0,3)<<std::endl;
-      //std::cout<<"NNOutput - 32 = "<< NNOutput.to_double() - 32.0 <<std::endl;
-          
-
       double NNOutput_corrected = NNOutput.to_double() - 32.0; 
-      double NNOutput_exp = 1.0/(1.0+exp(-1.0*NNOutput_corrected));  
-
-      
-      std::cout<<"NNOutput_exp = " << NNOutput_exp << std::endl;
-      
-      std::ofstream NNinputtrackcheck("NNinputtrackcheck_new.txt", std::ios::app);
-      NNinputtrackcheck<<"inputAssoc(0,0)(ptEmulation_rescale) = "<< inputAssoc.tensor<float, 2>()(0,0)<<std::endl;
-      NNinputtrackcheck<<"inputAssoc(0,1)(MVAEmulation_rescale) = "<< inputAssoc.tensor<float, 2>()(0,1)<<std::endl;
-      NNinputtrackcheck<<"inputAssoc(0,2)(resBinEmulation_rescale) = "<< inputAssoc.tensor<float, 2>()(0,2)<<std::endl;
-      NNinputtrackcheck<<"inputAssoc(0,3)(dzEmulation_rescale) = "<< inputAssoc.tensor<float, 2>()(0,3)<<std::endl;
-      //NNcheck<<"NNOutput_corrected = "<< NNOutput_corrected <<std::endl;
-      NNinputtrackcheck<<"NNOutput = " << NNOutput_exp << std::endl;
-      
-      NNinputtrackcheck.close();
-      
- 
-      float pt = t.momentum().perp();
-      float eta = t.momentum().eta();
-      float phi = t.momentum().phi();
-      float z0 = t.POCA().z();  //cm
-
-      std::cout << "Track input in selection module: " << std::endl;
-      std::cout << "Track pt = " << pt << std::endl;
-      std::cout << "Track eta = " << eta << std::endl;
-      std::cout << "Track phi = " << phi << std::endl;
-      std::cout << "Track z0 = " << z0 << std::endl;
-
-      std::ofstream NNinputtrackcheck2("NNinputtrackcheck_new8.txt", std::ios::app);
-      NNinputtrackcheck2 <<"Track pt = "<< pt <<std::endl;
-      NNinputtrackcheck2 <<"Track eta = "<< eta <<std::endl;
-      NNinputtrackcheck2 <<"Track phi = "<< phi <<std::endl;
-      NNinputtrackcheck2 <<"Track z0 = "<< z0 <<std::endl;
-      //NNcheck<<"NNOutput_corrected = "<< NNOutput_corrected <<std::endl;
-      NNinputtrackcheck2 <<"NNOutput = " << NNOutput_exp << std::endl;
-
-      NNinputtrackcheck2.close();
-
-
-      //check output of NN with inputs set to zero
-      /*
-      inputAssoc_test.tensor<float, 2>()(0, 0) = 2.125;
-      inputAssoc_test.tensor<float, 2>()(0, 1) = 7.0;
-      inputAssoc_test.tensor<float, 2>()(0, 2) = 0.9375;
-      inputAssoc_test.tensor<float, 2>()(0, 3) = 11.0;
-
-      tensorflow::run(AssociationSesh_, {{"assoc:0", inputAssoc_test}}, {"Identity:0"}, &outputAssoc_test);
-      
-      ap_ufixed<16, 5> NNOutput_test;
-      NNOutput_test = (double)outputAssoc_test[0].tensor<float, 2>()(0, 0) ;
-      */
-      /* 
-      std::cout<<"inputAssoc_test(0,0)(ptEmulation_rescale) = "<< inputAssoc_test.tensor<float, 2>()(0,0)<<std::endl;
-      std::cout<<"inputAssoc_test(0,1)(MVAEmulation_rescale) = "<< inputAssoc_test.tensor<float, 2>()(0,1)<<std::endl;
-      std::cout<<"inputAssoc_test(0,2)(resBinEmulation_rescale) = "<< inputAssoc_test.tensor<float, 2>()(0,2)<<std::endl;
-      std::cout<<"inputAssoc_test(0,3)(dzEmulation_rescale) = "<< inputAssoc_test.tensor<float, 2>()(0,3)<<std::endl;
-      std::cout<<"NNOutput_test - 32 = "<< NNOutput_test.to_double() - 32.0 <<std::endl;
-      */
+      double NNOutput_exp = 1.0/(1.0+exp(-1.0*((double)outputAssoc[0].tensor<float, 2>()(0, 0))));  
       
       auto final_boolean = NNOutput_exp >= AssociationThreshold_;      
  
-      //std::cout << "Final boolean = " << final_boolean << std::endl;
+      // std::cout << "Final boolean = " << final_boolean << std::endl;
+
+      // std::cout << "Emu Selection vz: " << v.z0() << " vertex " << dZ << " track" << t.getZ0() << std::endl;
+      // std::cout << "Features: " << ptEmulation_rescale.to_double() << " " <<
+      //                              MVAEmulation_rescale.to_double() << " " <<
+      //                              resBinEmulation_rescale.to_double()/16.0 << " " <<
+      //                              dZEmulation_rescale.to_double() << " " <<
+      //                              NNOutput_exp << std::endl;
+ 
+      return  NNOutput_exp >= AssociationThreshold_;
+    }
+
+    template <typename VertexType>
+    bool associate(const L1Track& t, const VertexType& v) const {
+
+      tensorflow::Tensor inputAssoc(tensorflow::DT_FLOAT, {1, 4});
+      std::vector<tensorflow::Tensor> outputAssoc;
+
+      float eta = t.momentum().eta();
+
+      auto lower = std::lower_bound(eta_bins_.begin(), eta_bins_.end(), eta);
+
+      //int resbin = (lower - res_bins_.begin());
+      int resbin = std::distance(eta_bins_.begin(), lower);
+      float binWidth = z0_binning_[2];
+      // calculate integer dZ from track z0 and vertex z0 (use floating point version and convert internally allowing use of both emulator and simulator vertex and track)
+      float dZ = abs(floor(((t.z0() + z0_binning_[1]) / (binWidth))) - floor(((v.z0() + z0_binning_[1]) / (binWidth))));
+
+      ap_ufixed<14, 9> ptEmulation = t.momentum().perp();
+
+      ap_ufixed<22, 9> ptEmulation_rescale;
+      ptEmulation_rescale = ptEmulation.to_double();
+
+      ap_ufixed<22, 9> resBinEmulation_rescale;
+      resBinEmulation_rescale = res_bins_[resbin];
+
+      ap_ufixed<22, 9> MVAEmulation_rescale;
+      MVAEmulation_rescale = t.getMVAQualityBits();
+
+      ap_ufixed<22, 9> dZEmulation_rescale;
+      dZEmulation_rescale = dZ;
+
+      inputAssoc.tensor<float, 2>()(0, 0) = ptEmulation_rescale.to_double();
+      inputAssoc.tensor<float, 2>()(0, 1) = MVAEmulation_rescale.to_double();
+      inputAssoc.tensor<float, 2>()(0, 2) = resBinEmulation_rescale.to_double()/16.0;
+      inputAssoc.tensor<float, 2>()(0, 3) = dZEmulation_rescale.to_double();
+
+      // Run Association Network:
+      tensorflow::run(AssociationSesh_, {{"assoc:0", inputAssoc}}, {"Identity:0"}, &outputAssoc);
+ 
+      double NNOutput = (double)outputAssoc[0].tensor<float, 2>()(0, 0) ; 
+      double NNOutput_exp = 1.0/(1.0+exp(-1.0*(NNOutput)));  
+      
+      auto final_boolean = NNOutput_exp >= AssociationThreshold_;      
+ 
+      // std::cout << "Final boolean = " << final_boolean << std::endl;
+
+      // std::cout << "Sim Selection vz: " << v.z0() << " vertex " << dZ << " track" << t.getZ0() << std::endl;
+      // std::cout << "Features: " << ptEmulation_rescale.to_double() << " " <<
+      //                              MVAEmulation_rescale.to_double() << " " <<
+      //                              resBinEmulation_rescale.to_double()/16.0 << " " <<
+      //                              dZEmulation_rescale.to_double() << " " <<
+      //                              NNOutput_exp << std::endl;
  
       return  NNOutput_exp >= AssociationThreshold_;
     }
@@ -491,6 +490,8 @@ private:
 
   // ----------member data ---------------------------
   const edm::EDGetTokenT<TTTrackCollection> l1TracksToken_;
+  edm::EDGetTokenT<TTTrackAssociationMap<Ref_Phase2TrackerDigi_> > ttTrackMCTruthToken_;
+  bool useTruth_;
   edm::EDGetTokenT<l1t::VertexCollection> l1VerticesToken_;
   edm::EDGetTokenT<l1t::VertexWordCollection> l1VerticesEmulationToken_;
   edm::ESGetToken<TrackerTopology, TrackerTopologyRcd> tTopoToken_;
@@ -519,6 +520,8 @@ private:
 //
 L1TrackSelectionProducer::L1TrackSelectionProducer(const edm::ParameterSet& iConfig)
     : l1TracksToken_(consumes<TTTrackCollection>(iConfig.getParameter<edm::InputTag>("l1TracksInputTag"))),
+      ttTrackMCTruthToken_(consumes<TTTrackAssociationMap<Ref_Phase2TrackerDigi_> >(iConfig.getParameter<edm::InputTag>("MCTruthTrackInputTag"))),
+      useTruth_(iConfig.getParameter<bool>("useTruth")),
       tTopoToken_(esConsumes<TrackerTopology, TrackerTopologyRcd>(edm::ESInputTag("", ""))),
       outputCollectionName_(iConfig.getParameter<std::string>("outputCollectionName")),
       cutSet_(iConfig.getParameter<edm::ParameterSet>("cutSet")),
@@ -568,7 +571,7 @@ L1TrackSelectionProducer::L1TrackSelectionProducer(const edm::ParameterSet& iCon
     produces<TTTrackRefCollection>(outputCollectionName_);
     if (iConfig.exists("l1VerticesInputTag")) {
       l1VerticesToken_ = consumes<l1t::VertexCollection>(iConfig.getParameter<edm::InputTag>("l1VerticesInputTag"));
-      if (useAssociationNetwork_ == false)
+      if ((useAssociationNetwork_ == false) & (useTruth_ == false))
         doDeltaZCutSim_ = true;
       produces<TTTrackRefCollection>(outputCollectionName_ + "Associated");
     }
@@ -578,7 +581,7 @@ L1TrackSelectionProducer::L1TrackSelectionProducer(const edm::ParameterSet& iCon
     if (iConfig.exists("l1VerticesEmulationInputTag")) {
       l1VerticesEmulationToken_ =
           consumes<l1t::VertexWordCollection>(iConfig.getParameter<edm::InputTag>("l1VerticesEmulationInputTag"));
-      if (useAssociationNetwork_ == false)
+      if ((useAssociationNetwork_ == false) & (useTruth_ == false))
         doDeltaZCutEmu_ = true;
       produces<TTTrackRefCollection>(outputCollectionName_ + "AssociatedEmulation");
     }
@@ -702,9 +705,9 @@ void L1TrackSelectionProducer::printTrackInfo(edm::LogInfo& log, const L1Track& 
     ap_fixed<TrackBitWidths::kEtaSize, TrackBitWidths::kEtaMagSize> etaEmulation;
     etaEmulation.V = etaEmulationBits.range();
     double floatTkZ0 = track.undigitizeSignedValue(
-        track.getZ0Bits(), TTTrack_TrackWord::TrackBitWidths::kZ0Size, TTTrack_TrackWord::stepZ0, 0.0);
+        track.getZ0Bits(), TTTrack_TrackWord::TrackBitWidths::kZ0Size, TTTrack_TrackWord::stepZ0);
     double floatTkPhi = track.undigitizeSignedValue(
-        track.getPhiBits(), TTTrack_TrackWord::TrackBitWidths::kPhiSize, TTTrack_TrackWord::stepPhi0, 0.0);
+        track.getPhiBits(), TTTrack_TrackWord::TrackBitWidths::kPhiSize, TTTrack_TrackWord::stepPhi0);
     log << "\t\t(" << ptEmulation.to_double() << ", " << etaEmulation.to_double() << ", " << floatTkPhi << ", "
         << track.getNStubs() << ", " << track.getBendChi2() << ", " << track.getChi2RZ() << ", " << track.getChi2RPhi()
         << ", " << floatTkZ0 << ")\n";
@@ -722,6 +725,7 @@ void L1TrackSelectionProducer::produce(edm::StreamID, edm::Event& iEvent, const 
   const TrackerTopology& tTopo = iSetup.getData(tTopoToken_);
 
   TTTrackCollectionHandle l1TracksHandle;
+  edm::Handle<TTTrackAssociationMap<Ref_Phase2TrackerDigi_> > MCTruthTTTrackHandle;
   edm::Handle<l1t::VertexCollection> l1VerticesHandle;
   edm::Handle<l1t::VertexWordCollection> l1VerticesEmulationHandle;
 
@@ -731,27 +735,27 @@ void L1TrackSelectionProducer::produce(edm::StreamID, edm::Event& iEvent, const 
   iEvent.getByToken(l1TracksToken_, l1TracksHandle);
   size_t nOutputApproximate = l1TracksHandle->size();
   if (processSimulatedTracks_) {
-    if (doDeltaZCutSim_) {
       iEvent.getByToken(l1VerticesToken_, l1VerticesHandle);
       leadingVertex = l1VerticesHandle->at(0);
       if (debug_ >= 2) {
         edm::LogInfo("L1TrackSelectionProducer") << "leading vertex z0 = " << leadingVertex.z0();
       }
-    }
     vTTTrackOutput->reserve(nOutputApproximate);
     vTTTrackAssociatedOutput->reserve(nOutputApproximate);
   }
   if (processEmulatedTracks_) {
-    if (doDeltaZCutEmu_) {
       iEvent.getByToken(l1VerticesEmulationToken_, l1VerticesEmulationHandle);
       leadingEmulationVertex = l1VerticesEmulationHandle->at(0);
       if (debug_ >= 2) {
         edm::LogInfo("L1TrackSelectionProducer") << "leading emulation vertex z0 = " << leadingEmulationVertex.z0();
       }
-    }
     vTTTrackEmulationOutput->reserve(nOutputApproximate);
     vTTTrackAssociatedEmulationOutput->reserve(nOutputApproximate);
   }
+
+  iEvent.getByToken(ttTrackMCTruthToken_, MCTruthTTTrackHandle);
+
+  TruthSelector TTTrackTruthSelector;
 
   NNTrackSelector TTTrackNetworkSelector(AssociationSesh_,
                                          AssociationThreshold_,
@@ -772,12 +776,15 @@ void L1TrackSelectionProducer::produce(edm::StreamID, edm::Event& iEvent, const 
     const auto& track = l1TracksHandle->at(i);
 
     // Select tracks based on the floating point TTTrack
-    if (processSimulatedTracks_ && kinSel(track) && nPSStubsSel(track) && chi2Sel(track)) {
+    if (processSimulatedTracks_ && kinSel(track) && chi2Sel(track)) {
       vTTTrackOutput->push_back(TTTrackRef(l1TracksHandle, i));
       if (doDeltaZCutSim_ && deltaZSel(track, leadingVertex)) {
         vTTTrackAssociatedOutput->push_back(TTTrackRef(l1TracksHandle, i));
       }
-      if (useAssociationNetwork_ && TTTrackNetworkSelector.associate<l1t::Vertex>(track, leadingVertex)) {
+      if (useAssociationNetwork_ && TTTrackNetworkSelector.associate<l1t::VertexWord>(track, leadingEmulationVertex)) {
+        vTTTrackAssociatedOutput->push_back(TTTrackRef(l1TracksHandle, i));
+      }
+      if (useTruth_ && TTTrackTruthSelector.associate(track,MCTruthTTTrackHandle,l1TracksHandle,i)) {
         vTTTrackAssociatedOutput->push_back(TTTrackRef(l1TracksHandle, i));
       }
     }
@@ -788,8 +795,11 @@ void L1TrackSelectionProducer::produce(edm::StreamID, edm::Event& iEvent, const 
       if (doDeltaZCutEmu_ && deltaZSelEmu(track, leadingEmulationVertex)) {
         vTTTrackAssociatedEmulationOutput->push_back(TTTrackRef(l1TracksHandle, i));
       }
-      if (useAssociationNetwork_ && TTTrackNetworkSelector.associate<l1t::VertexWord>(track, leadingEmulationVertex)) {
-        vTTTrackAssociatedOutput->push_back(TTTrackRef(l1TracksHandle, i));
+      if (useAssociationNetwork_ && TTTrackNetworkSelector.associateEmu<l1t::VertexWord>(track, leadingEmulationVertex)) {
+        vTTTrackAssociatedEmulationOutput->push_back(TTTrackRef(l1TracksHandle, i));
+      }
+      if (useTruth_ && TTTrackTruthSelector.associate(track,MCTruthTTTrackHandle,l1TracksHandle,i)) {
+        vTTTrackAssociatedEmulationOutput->push_back(TTTrackRef(l1TracksHandle, i));
       }
     }
   }
@@ -811,6 +821,9 @@ void L1TrackSelectionProducer::produce(edm::StreamID, edm::Event& iEvent, const 
     if (useAssociationNetwork_) {
       iEvent.put(std::move(vTTTrackAssociatedOutput), outputCollectionName_ + "Associated");
     }
+    if (useTruth_) {
+      iEvent.put(std::move(vTTTrackAssociatedOutput), outputCollectionName_ + "Associated");
+    }
   }
   if (processEmulatedTracks_) {
     iEvent.put(std::move(vTTTrackEmulationOutput), outputCollectionName_ + "Emulation");
@@ -818,6 +831,9 @@ void L1TrackSelectionProducer::produce(edm::StreamID, edm::Event& iEvent, const 
       iEvent.put(std::move(vTTTrackAssociatedEmulationOutput), outputCollectionName_ + "AssociatedEmulation");
     }
     if (useAssociationNetwork_) {
+      iEvent.put(std::move(vTTTrackAssociatedEmulationOutput), outputCollectionName_ + "AssociatedEmulation");
+    }
+    if (useTruth_) {
       iEvent.put(std::move(vTTTrackAssociatedEmulationOutput), outputCollectionName_ + "AssociatedEmulation");
     }
   }
@@ -871,6 +887,8 @@ void L1TrackSelectionProducer::fillDescriptions(edm::ConfigurationDescriptions& 
       ->setComment("Eta bounds used to set z0 resolution input feature");
   desc.add<std::vector<double>>("AssociationNetworkZ0ResBins", {})->setComment("z0 resolution input feature bins");
 
+  desc.add<edm::InputTag>("MCTruthTrackInputTag", edm::InputTag("TTTrackAssociatorFromPixelDigis", "l1tGTTInputProducer"));
+  desc.add<bool>("useTruth", false)->setComment("Use Truth Information");
   descriptions.addWithDefaultLabel(desc);
 }
 

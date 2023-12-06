@@ -279,7 +279,7 @@ protected:
   }
 
 public:
-  // ----------public member functions --------------
+  // ----------private member functions --------------
   unsigned int countSetBits(unsigned int n) const {
     // Adapted from: https://www.geeksforgeeks.org/count-set-bits-in-an-integer/
     unsigned int count = 0;
@@ -316,7 +316,7 @@ public:
     return (up - bins.begin() - 1);
   }
 
-  double undigitizeSignedValue(unsigned int twosValue, unsigned int nBits, double lsb, double offset = 0.5) const {
+  double undigitizeSignedValue(unsigned int twosValue, unsigned int nBits, double lsb) const {
     // Check that none of the bits above the nBits-1 bit, in a range of [0, nBits-1], are set.
     // This makes sure that it isn't possible for the value represented by `twosValue` to be
     //  any bigger than ((1 << nBits) - 1).
@@ -329,7 +329,7 @@ public:
     }
 
     // Convert to floating point value
-    return (double(digitizedValue) + offset) * lsb;
+    return (double(digitizedValue) + 0.5) * lsb;
   }
 
   // ----------member data ---------------------------

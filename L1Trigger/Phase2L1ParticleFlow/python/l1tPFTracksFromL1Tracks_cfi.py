@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 l1tPFTracksFromL1Tracks = cms.EDProducer("PFTrackProducerFromL1Tracks",
-    L1TrackTag = cms.InputTag("l1tTTTracksFromTrackletEmulation", "Level1TTTracks"),
+    L1TrackTag = cms.InputTag("l1tTrackSelectionProducer", "Level1TTTracksSelectedEmulation"),
     nParam = cms.uint32(4),
     resolCalo = cms.PSet(
             etaBins = cms.vdouble( 1.300,  1.700,  2.800,  3.200,  4.000,  5.000),
@@ -18,8 +18,8 @@ l1tPFTracksFromL1Tracks = cms.EDProducer("PFTrackProducerFromL1Tracks",
             kind    = cms.string('track'),
     ),
     qualityBits = cms.vstring(
-        "momentum.perp > 2 && getStubRefs.size >= 4",
-        "momentum.perp > 2 && getStubRefs.size >= 6", # historical reasons
+        "momentum.perp > 2 && getStubRefs.size >= 4 && chi2Red < 15",
+        "momentum.perp > 2 && getStubRefs.size >= 6 && chi2Red < 15 && chi2 < 50", # historical reasons
         "momentum.perp > 5 && getStubRefs.size >= 4"
     ), 
     redigitizeTrackWord = cms.bool(True),
