@@ -7,7 +7,7 @@ class MultiJetBaseline_emulator : public hls4mlEmulator::Model{
     private:
         input_t _input[N_INPUT_1_1*N_INPUT_2_1];
         layer24_t _layer24_out[N_LAYER_20];
-        qDense_out_reg_result_t _layer22_out[N_LAYER_22];
+        layer22_t _layer22_out[N_LAYER_22];
     public:
 
 
@@ -36,7 +36,7 @@ class MultiJetBaseline_emulator : public hls4mlEmulator::Model{
 
         virtual void read_result(std::any result)
         { 
-            std::pair<std::array<qDense_out_reg_result_t,N_LAYER_22>,std::array<layer24_t,N_LAYER_20>> *result_p = std::any_cast<std::pair<std::array<qDense_out_reg_result_t,N_LAYER_22>,std::array<layer24_t,N_LAYER_20>>*>(result);
+            std::pair<std::array<layer22_t,N_LAYER_22>,std::array<layer24_t,N_LAYER_20>> *result_p = std::any_cast<std::pair<std::array<layer22_t,N_LAYER_22>,std::array<layer24_t,N_LAYER_20>>*>(result);
             std::cout << "OUTPUTS REG: ";
             for (int i = 0; i < N_LAYER_22; ++i ){
                 result_p->first[i] = _layer22_out[i];  

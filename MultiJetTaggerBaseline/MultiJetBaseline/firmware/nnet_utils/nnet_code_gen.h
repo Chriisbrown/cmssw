@@ -1,6 +1,7 @@
 #ifndef NNET_INSTR_GEN_H_
 #define NNET_INSTR_GEN_H_
 
+#include "nnet_conv1d_latency.h"
 #include "nnet_helpers.h"
 #include <iostream>
 
@@ -25,9 +26,29 @@ template <class data_T, typename CONFIG_T> class FillConv2DBuffer {
     }
 };
 
+template <class data_T, class res_T, typename CONFIG_T> class PointwiseConv1D {
+  public:
+    static void pointwise_conv(data_T data[CONFIG_T::in_width * CONFIG_T::n_chan],
+                               res_T res[CONFIG_T::out_width * CONFIG_T::n_filt],
+                               typename CONFIG_T::weight_t weights[CONFIG_T::n_chan * CONFIG_T::n_filt],
+                               typename CONFIG_T::bias_t biases[CONFIG_T::n_filt]) {
+        // To be implemented in subclasses
+    }
+};
+
+template <class data_T, class res_T, typename CONFIG_T> class PointwiseConv2D {
+  public:
+    static void pointwise_conv(data_T data[CONFIG_T::in_height * CONFIG_T::in_width * CONFIG_T::n_chan],
+                               res_T res[CONFIG_T::out_height * CONFIG_T::out_width * CONFIG_T::n_filt],
+                               typename CONFIG_T::weight_t weights[CONFIG_T::n_chan * CONFIG_T::n_filt],
+                               typename CONFIG_T::bias_t biases[CONFIG_T::n_filt]) {
+        // To be implemented in subclasses
+    }
+};
+
 // hls4ml insert code
 template<class data_T, typename CONFIG_T>
-class fill_buffer_28 : public FillConv1DBuffer<data_T, CONFIG_T> {
+class fill_buffer_26 : public FillConv1DBuffer<data_T, CONFIG_T> {
     public:
     static void fill_buffer(
         data_T data[CONFIG_T::in_width * CONFIG_T::n_chan],
@@ -100,8 +121,44 @@ class fill_buffer_28 : public FillConv1DBuffer<data_T, CONFIG_T> {
         }
     }
 };
+template<class data_T, class res_T, typename CONFIG_T>
+class pointwise_conv_26 : public PointwiseConv1D<data_T, res_T, CONFIG_T> {
+  public:
+    static void pointwise_conv(
+                               data_T data[CONFIG_T::in_width * CONFIG_T::n_chan],
+                               res_T res[CONFIG_T::out_width * CONFIG_T::n_filt],
+                               typename CONFIG_T::weight_t weights[CONFIG_T::n_chan * CONFIG_T::n_filt],
+                               typename CONFIG_T::bias_t biases[CONFIG_T::n_filt]) {
+        data_T data_tmp[CONFIG_T::reuse_factor][CONFIG_T::in_width * CONFIG_T::n_chan / CONFIG_T::reuse_factor];
+        #pragma HLS ARRAY_PARTITION variable=data_tmp complete dim=0
+        res_T res_tmp[CONFIG_T::reuse_factor][CONFIG_T::out_width * CONFIG_T::n_filt / CONFIG_T::reuse_factor];
+        #pragma HLS ARRAY_PARTITION variable=res_tmp complete dim=0
+
+    RFInputLoop:
+        for (int jj = 0; jj < CONFIG_T::reuse_factor; jj++) {
+        #pragma HLS UNROLL
+        InnerInputLoop:
+            for (int ii = 0; ii < CONFIG_T::in_width * CONFIG_T::n_chan / CONFIG_T::reuse_factor; ii++) {
+                #pragma HLS UNROLL
+                data_tmp[jj][ii] = data[jj * CONFIG_T::in_width * CONFIG_T::n_chan / CONFIG_T::reuse_factor + ii];
+            }
+        }
+
+        pointwise_conv_1d_latency_cl<data_T, res_T, CONFIG_T>(data_tmp[0], res_tmp[0], weights, biases);
+
+    RFOutputLoop:
+        for (int jj = 0; jj < CONFIG_T::reuse_factor; jj++) {
+        #pragma HLS UNROLL
+        InnerOutputLoop:
+            for (int ii = 0; ii < CONFIG_T::out_width * CONFIG_T::n_filt / CONFIG_T::reuse_factor; ii++) {
+                #pragma HLS UNROLL
+                res[jj * CONFIG_T::out_width * CONFIG_T::n_filt / CONFIG_T::reuse_factor + ii] = res_tmp[jj][ii];
+            }
+        }
+    }
+};
 template<class data_T, typename CONFIG_T>
-class fill_buffer_29 : public FillConv1DBuffer<data_T, CONFIG_T> {
+class fill_buffer_27 : public FillConv1DBuffer<data_T, CONFIG_T> {
     public:
     static void fill_buffer(
         data_T data[CONFIG_T::in_width * CONFIG_T::n_chan],
@@ -171,6 +228,42 @@ class fill_buffer_29 : public FillConv1DBuffer<data_T, CONFIG_T> {
         if (partition ==  15) {
             buffer[0][0] =  data[480]; buffer[0][1] =  data[481]; buffer[0][2] =  data[482]; buffer[0][3] =  data[483]; buffer[0][4] =  data[484]; buffer[0][5] =  data[485]; buffer[0][6] =  data[486]; buffer[0][7] =  data[487]; buffer[0][8] =  data[488]; buffer[0][9] =  data[489]; buffer[0][10] =  data[490]; buffer[0][11] =  data[491]; buffer[0][12] =  data[492]; buffer[0][13] =  data[493]; buffer[0][14] =  data[494]; buffer[0][15] =  data[495]; buffer[0][16] =  data[496]; buffer[0][17] =  data[497]; buffer[0][18] =  data[498]; buffer[0][19] =  data[499]; buffer[0][20] =  data[500]; buffer[0][21] =  data[501]; buffer[0][22] =  data[502]; buffer[0][23] =  data[503]; buffer[0][24] =  data[504]; buffer[0][25] =  data[505]; buffer[0][26] =  data[506]; buffer[0][27] =  data[507]; buffer[0][28] =  data[508]; buffer[0][29] =  data[509]; buffer[0][30] =  data[510]; buffer[0][31] =  data[511];
 
+        }
+    }
+};
+template<class data_T, class res_T, typename CONFIG_T>
+class pointwise_conv_27 : public PointwiseConv1D<data_T, res_T, CONFIG_T> {
+  public:
+    static void pointwise_conv(
+                               data_T data[CONFIG_T::in_width * CONFIG_T::n_chan],
+                               res_T res[CONFIG_T::out_width * CONFIG_T::n_filt],
+                               typename CONFIG_T::weight_t weights[CONFIG_T::n_chan * CONFIG_T::n_filt],
+                               typename CONFIG_T::bias_t biases[CONFIG_T::n_filt]) {
+        data_T data_tmp[CONFIG_T::reuse_factor][CONFIG_T::in_width * CONFIG_T::n_chan / CONFIG_T::reuse_factor];
+        #pragma HLS ARRAY_PARTITION variable=data_tmp complete dim=0
+        res_T res_tmp[CONFIG_T::reuse_factor][CONFIG_T::out_width * CONFIG_T::n_filt / CONFIG_T::reuse_factor];
+        #pragma HLS ARRAY_PARTITION variable=res_tmp complete dim=0
+
+    RFInputLoop:
+        for (int jj = 0; jj < CONFIG_T::reuse_factor; jj++) {
+        #pragma HLS UNROLL
+        InnerInputLoop:
+            for (int ii = 0; ii < CONFIG_T::in_width * CONFIG_T::n_chan / CONFIG_T::reuse_factor; ii++) {
+                #pragma HLS UNROLL
+                data_tmp[jj][ii] = data[jj * CONFIG_T::in_width * CONFIG_T::n_chan / CONFIG_T::reuse_factor + ii];
+            }
+        }
+
+        pointwise_conv_1d_latency_cl<data_T, res_T, CONFIG_T>(data_tmp[0], res_tmp[0], weights, biases);
+
+    RFOutputLoop:
+        for (int jj = 0; jj < CONFIG_T::reuse_factor; jj++) {
+        #pragma HLS UNROLL
+        InnerOutputLoop:
+            for (int ii = 0; ii < CONFIG_T::out_width * CONFIG_T::n_filt / CONFIG_T::reuse_factor; ii++) {
+                #pragma HLS UNROLL
+                res[jj * CONFIG_T::out_width * CONFIG_T::n_filt / CONFIG_T::reuse_factor + ii] = res_tmp[jj][ii];
+            }
         }
     }
 };
