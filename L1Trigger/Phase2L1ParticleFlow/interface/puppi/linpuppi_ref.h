@@ -5,6 +5,10 @@
 #include "linpuppi_bits.h"
 
 #include <vector>
+#ifdef CMSSW_GIT_HASH
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#endif
+#include "L1Trigger/Phase2L1ParticleFlow/interface/NNVtxAssoc.h"
 
 namespace edm {
   class ParameterSet;
@@ -35,6 +39,12 @@ namespace l1ct {
                      double priorNe,
                      double priorPh,
                      pt_t ptCut,
+                     bool useMLAssociation,
+                     const double associationThreshold,
+                     std::string associationGraphPath,
+                     std::vector<double> associationNetworkZ0binning,
+                     std::vector<double> associationNetworkEtaBounds,
+                     std::vector<double> associationNetworkZ0ResBins,
                      unsigned int nFinalSort = 0,
                      SortAlgo finalSortAlgo = SortAlgo::Insertion)
         : nTrack_(nTrack),
@@ -56,10 +66,27 @@ namespace l1ct {
           priorNe_(1, priorNe),
           priorPh_(1, priorPh),
           ptCut_(1, ptCut),
+          useMLAssociation_(useMLAssociation),
+          associationThreshold_(associationThreshold),
+          associationGraphPath_(associationGraphPath),
+          associationNetworkZ0binning_(associationNetworkZ0binning),
+          associationNetworkEtaBounds_(associationNetworkEtaBounds),
+          associationNetworkZ0ResBins_(associationNetworkZ0ResBins),
           nFinalSort_(nFinalSort ? nFinalSort : nOut),
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
-          fakePuppi_(false) {}
+          fakePuppi_(false) {
+      if (useMLAssociation_) {
+        associationGraph_ = tensorflow::loadGraphDef(associationGraphPath_);
+        associationSesh_ = tensorflow::createSession(associationGraph_);
+
+        nnVtxAssoc_ = std::make_unique<NNVtxAssoc>(NNVtxAssoc(associationSesh_,
+                                                              associationThreshold_,
+                                                              associationNetworkZ0binning_,
+                                                              associationNetworkEtaBounds_,
+                                                              associationNetworkZ0ResBins_));
+      }
+    }
 
     LinPuppiEmulator(unsigned int nTrack,
                      unsigned int nIn,
@@ -90,6 +117,12 @@ namespace l1ct {
                      double priorPh_1,
                      pt_t ptCut_0,
                      pt_t ptCut_1,
+                     bool useMLAssociation,
+                     const double associationThreshold,
+                     std::string associationGraphPath,
+                     std::vector<double> associationNetworkZ0binning,
+                     std::vector<double> associationNetworkEtaBounds,
+                     std::vector<double> associationNetworkZ0ResBins,
                      unsigned int nFinalSort = 0,
                      SortAlgo finalSortAlgo = SortAlgo::Insertion);
 
@@ -112,6 +145,12 @@ namespace l1ct {
                      const std::vector<double> &priorNe,
                      const std::vector<double> &priorPh,
                      const std::vector<pt_t> &ptCut,
+                     bool useMLAssociation,
+                     const double associationThreshold,
+                     std::string associationGraphPath,
+                     std::vector<double> associationNetworkZ0binning,
+                     std::vector<double> associationNetworkEtaBounds,
+                     std::vector<double> associationNetworkZ0ResBins,
                      unsigned int nFinalSort,
                      SortAlgo finalSortAlgo)
         : nTrack_(nTrack),
@@ -133,12 +172,20 @@ namespace l1ct {
           priorNe_(priorNe),
           priorPh_(priorPh),
           ptCut_(ptCut),
+          useMLAssociation_(useMLAssociation),
+          associationThreshold_(associationThreshold),
+          associationGraphPath_(associationGraphPath),
+          associationNetworkZ0binning_(associationNetworkZ0binning),
+          associationNetworkEtaBounds_(associationNetworkEtaBounds),
+          associationNetworkZ0ResBins_(associationNetworkZ0ResBins),
           nFinalSort_(nFinalSort),
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
           fakePuppi_(false) {}
 
     LinPuppiEmulator(const edm::ParameterSet &iConfig);
+
+    ~LinPuppiEmulator();
 
     static edm::ParameterSetDescription getParameterSetDescription();
 
@@ -211,6 +258,19 @@ namespace l1ct {
     std::vector<double> alphaSlope_, alphaZero_, alphaCrop_;
     std::vector<double> priorNe_, priorPh_;
     std::vector<pt_t> ptCut_;
+
+    // NNVtx Association:
+    bool useMLAssociation_;
+    double associationThreshold_;
+    std::string associationGraphPath_;
+    std::vector<double> associationNetworkZ0binning_, associationNetworkEtaBounds_, associationNetworkZ0ResBins_;
+    std::unique_ptr<NNVtxAssoc> nnVtxAssoc_;
+    tensorflow::GraphDef *associationGraph_;
+    tensorflow::Session *associationSesh_;
+#ifdef CMSSW_GIT_HASH
+    edm::ParameterSet nnVtxAssocPSet_;
+#endif
+
     unsigned int nFinalSort_;  // output after a full sort of charged + neutral
     SortAlgo finalSortAlgo_;
 

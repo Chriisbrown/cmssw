@@ -8,6 +8,11 @@ from L1Trigger.Phase2L1ParticleFlow.pfClustersFromCombinedCalo_cff import l1tPFC
 from L1Trigger.Phase2L1ParticleFlow.l1tPFClustersFromHGC3DClusters_cfi import l1tPFClustersFromHGC3DClusters
 
 from L1Trigger.Phase2L1ParticleFlow.l1TkEgAlgoEmulator_cfi import tkEgAlgoParameters,tkEgSorterParameters
+from L1Trigger.VertexFinder.l1tVertexProducer_cfi import l1tVertexProducer
+
+from L1Trigger.Phase2L1ParticleFlow.mlAssociation_cfi import NNVtxAssociationPSet
+switchOnNNAssoc = cms.bool(False)
+# switchOnNNAssoc = cms.bool(True)
 
 l1tLayer1Barrel = cms.EDProducer("L1TCorrelatorLayer1Producer",
     tracks = cms.InputTag('l1tPFTracksFromL1Tracks'),
@@ -81,6 +86,8 @@ l1tLayer1Barrel = cms.EDProducer("L1TCorrelatorLayer1Producer",
         alphaCrop         = cms.vdouble(  4  ), # max. absolute value for alpha term
         priors             = cms.vdouble( 5.0 ),
         priorsPhoton      = cms.vdouble( 1.0 ),
+        useMLAssociation = switchOnNNAssoc, #Enable Association Network
+        NNVtxAssociation = NNVtxAssociationPSet,
     ),
     tkEgAlgoParameters = tkEgAlgoParameters.clone(
         nTRACK = 25,
@@ -221,6 +228,8 @@ l1tLayer1HGCal = cms.EDProducer("L1TCorrelatorLayer1Producer",
         alphaCrop         = cms.vdouble(  3 ,  3  ), # max. absolute value for alpha term
         priors             = cms.vdouble( 5.0, 5.0 ),
         priorsPhoton      = cms.vdouble( 1.5, 1.5 ), #When e/g ID not applied, use: cms.vdouble( 3.5, 3.5, 7.0 ),
+        useMLAssociation = switchOnNNAssoc, #Enable Association Network
+        NNVtxAssociation = NNVtxAssociationPSet,
     ),
     tkEgAlgoParameters = tkEgAlgoParameters.clone(
         nTRACK = 30,
@@ -327,6 +336,8 @@ l1tLayer1HGCalNoTK = cms.EDProducer("L1TCorrelatorLayer1Producer",
         alphaCrop         = cms.vdouble(  4  ), # max. absolute value for alpha term
         priors             = cms.vdouble( 7.0 ),
         priorsPhoton      = cms.vdouble( 5.0 ), #When e/g ID not applied, use: cms.vdouble( 3.5, 3.5, 7.0 ),
+        useMLAssociation = switchOnNNAssoc, #Enable Association Network
+        NNVtxAssociation = NNVtxAssociationPSet,
     ),
     tkEgAlgoParameters = tkEgAlgoParameters.clone(
         nTRACK = 30,
@@ -396,7 +407,9 @@ l1tLayer1HF = cms.EDProducer("L1TCorrelatorLayer1Producer",
         alphaCrop         = cms.vdouble(   4   ),
         priors             = cms.vdouble(  6.0  ),
         priorsPhoton      = cms.vdouble(  6.0  ),
-        debug = cms.untracked.bool(False)
+        debug = cms.untracked.bool(False),
+        useMLAssociation = switchOnNNAssoc, #Enable Association Network
+        NNVtxAssociation = NNVtxAssociationPSet,
     ),
     tkEgAlgoParameters = tkEgAlgoParameters.clone(
         nTRACK = 5,           # to be defined
