@@ -78,11 +78,6 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
       priorPh_(2),
       ptCut_(2),
       useMLAssociation_(useMLAssociation),
-      associationThreshold_(associationThreshold),
-      associationGraphPath_(associationGraphPath),
-      associationNetworkZ0binning_(associationNetworkZ0binning),
-      associationNetworkEtaBounds_(associationNetworkEtaBounds),
-      associationNetworkZ0ResBins_(associationNetworkZ0ResBins),
       nFinalSort_(nFinalSort ? nFinalSort : nOut),
       finalSortAlgo_(finalSortAlgo),
       debug_(false),
@@ -109,14 +104,11 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
   ptCut_[1] = ptCut_1;
 
   if (useMLAssociation_) {
-    associationGraph_ = tensorflow::loadGraphDef(associationGraphPath_);
-    associationSesh_ = tensorflow::createSession(associationGraph_);
-
-    nnVtxAssoc_ = std::make_unique<NNVtxAssoc>(NNVtxAssoc(associationSesh_,
-                                                          associationThreshold_,
-                                                          associationNetworkZ0binning_,
-                                                          associationNetworkEtaBounds_,
-                                                          associationNetworkZ0ResBins_));
+    nnVtxAssoc_ = std::make_unique<NNVtxAssoc>(NNVtxAssoc(associationGraphPath,
+                                                          associationThreshold,
+                                                          associationNetworkZ0binning,
+                                                          associationNetworkEtaBounds,
+                                                          associationNetworkZ0ResBins));
   }
 }
 
@@ -143,7 +135,6 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(const edm::ParameterSet &iConfig)
       priorPh_(iConfig.getParameter<std::vector<double>>("priorsPhoton")),
       ptCut_(edm::vector_transform(iConfig.getParameter<std::vector<double>>("ptCut"), l1ct::Scales::makePtFromFloat)),
       useMLAssociation_(iConfig.getParameter<bool>("useMLAssociation")),
-      nnVtxAssocPSet_(iConfig.getParameter<edm::ParameterSet>("NNVtxAssociation")),
       nFinalSort_(iConfig.getParameter<uint32_t>("nFinalSort")),
       debug_(iConfig.getUntrackedParameter<bool>("debug", false)),
       fakePuppi_(iConfig.getParameter<bool>("fakePuppi")) {
@@ -168,13 +159,12 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(const edm::ParameterSet &iConfig)
   if (absEtaBins_.size() + 1 != ptCut_.size())
     throw cms::Exception("Configuration", "size mismatch for ptCut parameter");
   if (useMLAssociation_) {
+    edm::ParameterSet nnVtxAssocPSet_ = iConfig.getParameter<edm::ParameterSet>("NNVtxAssociation");
     edm::FileInPath associationGraphPathFIP =
         edm::FileInPath(nnVtxAssocPSet_.getParameter<std::string>("associationGraph"));
-    associationGraph_ = tensorflow::loadGraphDef(associationGraphPathFIP.fullPath());
-    associationSesh_ = tensorflow::createSession(associationGraph_);
 
     nnVtxAssoc_ = std::make_unique<NNVtxAssoc>(
-        NNVtxAssoc(associationSesh_,
+        NNVtxAssoc(associationGraphPathFIP.fullPath(),
                    nnVtxAssocPSet_.getParameter<double>("associationThreshold"),
                    nnVtxAssocPSet_.getParameter<std::vector<double>>("associationNetworkZ0binning"),
                    nnVtxAssocPSet_.getParameter<std::vector<double>>("associationNetworkEtaBounds"),
@@ -227,12 +217,7 @@ edm::ParameterSetDescription l1ct::LinPuppiEmulator::getParameterSetDescription(
   return description;
 }
 
-l1ct::LinPuppiEmulator::~LinPuppiEmulator() {
-  if (useMLAssociation_) {
-    tensorflow::closeSession(associationSesh_);
-    delete associationGraph_;
-  }
-}
+l1ct::LinPuppiEmulator::~LinPuppiEmulator() {}
 #endif
 
 void l1ct::LinPuppiEmulator::puppisort_and_crop_ref(unsigned int nOutMax,

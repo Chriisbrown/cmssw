@@ -9,16 +9,18 @@
 #include "DataFormats/L1TParticleFlow/interface/PFTrack.h"
 #include <iomanip>
 
-NNVtxAssoc::NNVtxAssoc(tensorflow::Session* AssociationSesh,
+NNVtxAssoc::NNVtxAssoc(std::string AssociationGraphPath,
                        const double AssociationThreshold,
                        const std::vector<double>& AssociationNetworkZ0binning,
                        const std::vector<double>& AssociationNetworkEtaBounds,
                        const std::vector<double>& AssociationNetworkZ0ResBins)
-    : AssociationSesh_(AssociationSesh),
-      AssociationThreshold_(AssociationThreshold),
+    : associationThreshold_(AssociationThreshold),
       z0_binning_(AssociationNetworkZ0binning),
       eta_bins_(AssociationNetworkEtaBounds),
-      res_bins_(AssociationNetworkZ0ResBins) {}
+      res_bins_(AssociationNetworkZ0ResBins) {
+  tensorflow::GraphDef* associationGraph_ = tensorflow::loadGraphDef(AssociationGraphPath);
+  associationSesh_ = tensorflow::createSession(associationGraph_);
+}
 
 template <typename T>
 bool NNVtxAssoc::TTTrackNetworkSelector(const PFRegionEmu& region, T& t, const l1ct::PVObjEmu& v) {
@@ -54,7 +56,7 @@ bool NNVtxAssoc::TTTrackNetworkSelector(const PFRegionEmu& region, T& t, const l
   inputAssoc.tensor<float, 2>()(0, 3) = dZEmulation_rescale.to_double();
 
   // Run Association Network:
-  tensorflow::run(AssociationSesh_,
+  tensorflow::run(associationSesh_,
                   {{"assoc:0", inputAssoc}},
                   {"Identity:0"},
                   &outputAssoc);  //BRS: Need to update with new training
@@ -62,7 +64,7 @@ bool NNVtxAssoc::TTTrackNetworkSelector(const PFRegionEmu& region, T& t, const l
   double NNOutput = (double)outputAssoc[0].tensor<float, 2>()(0, 0);
   double NNOutput_exp = 1.0 / (1.0 + exp(-1.0 * (NNOutput)));
 
-  return NNOutput_exp >= AssociationThreshold_;
+  return NNOutput_exp >= associationThreshold_;
 }
 
 #ifdef CMSSW_GIT_HASH
@@ -84,7 +86,7 @@ void NNVtxAssoc::NNVtxAssocDebug() {
   // ToDo: Can switch this to use logs
   std::cout << std::setprecision(3) << std::fixed;
   std::cout << "-- NNVtxAssocDebug --\n";
-  std::cout << "AssociationThreshold: " << this->AssociationThreshold_ << "\n";
+  std::cout << "AssociationThreshold: " << this->associationThreshold_ << "\n";
   std::cout << "z0_binning: ";
   for (auto i : this->z0_binning_)
     std::cout << i << " ";

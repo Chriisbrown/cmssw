@@ -20,7 +20,7 @@ using namespace l1ct;
 
 class NNVtxAssoc {
 public:
-  NNVtxAssoc(tensorflow::Session* AssociationSesh,
+  NNVtxAssoc(std::string AssociationGraphPath,
              const double AssociationThreshold,
              const std::vector<double>& AssociationNetworkZ0binning,
              const std::vector<double>& AssociationNetworkEtaBounds,
@@ -35,8 +35,8 @@ public:
   bool TTTrackNetworkSelector(const PFRegionEmu& region, T& t, const l1ct::PVObjEmu& v);
 
 private:
-  tensorflow::Session* AssociationSesh_;
-  double AssociationThreshold_;
+  tensorflow::Session* associationSesh_;
+  double associationThreshold_;
   std::vector<double> z0_binning_;
   std::vector<double> eta_bins_;
   std::vector<double> res_bins_;

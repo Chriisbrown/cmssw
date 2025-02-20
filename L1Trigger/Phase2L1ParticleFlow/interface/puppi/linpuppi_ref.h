@@ -5,9 +5,6 @@
 #include "linpuppi_bits.h"
 
 #include <vector>
-#ifdef CMSSW_GIT_HASH
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#endif
 #include "L1Trigger/Phase2L1ParticleFlow/interface/NNVtxAssoc.h"
 
 namespace edm {
@@ -67,24 +64,16 @@ namespace l1ct {
           priorPh_(1, priorPh),
           ptCut_(1, ptCut),
           useMLAssociation_(useMLAssociation),
-          associationThreshold_(associationThreshold),
-          associationGraphPath_(associationGraphPath),
-          associationNetworkZ0binning_(associationNetworkZ0binning),
-          associationNetworkEtaBounds_(associationNetworkEtaBounds),
-          associationNetworkZ0ResBins_(associationNetworkZ0ResBins),
           nFinalSort_(nFinalSort ? nFinalSort : nOut),
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
           fakePuppi_(false) {
       if (useMLAssociation_) {
-        associationGraph_ = tensorflow::loadGraphDef(associationGraphPath_);
-        associationSesh_ = tensorflow::createSession(associationGraph_);
-
-        nnVtxAssoc_ = std::make_unique<NNVtxAssoc>(NNVtxAssoc(associationSesh_,
-                                                              associationThreshold_,
-                                                              associationNetworkZ0binning_,
-                                                              associationNetworkEtaBounds_,
-                                                              associationNetworkZ0ResBins_));
+        nnVtxAssoc_ = std::make_unique<NNVtxAssoc>(NNVtxAssoc(associationGraphPath,
+                                                              associationThreshold,
+                                                              associationNetworkZ0binning,
+                                                              associationNetworkEtaBounds,
+                                                              associationNetworkZ0ResBins));
       }
     }
 
@@ -173,11 +162,6 @@ namespace l1ct {
           priorPh_(priorPh),
           ptCut_(ptCut),
           useMLAssociation_(useMLAssociation),
-          associationThreshold_(associationThreshold),
-          associationGraphPath_(associationGraphPath),
-          associationNetworkZ0binning_(associationNetworkZ0binning),
-          associationNetworkEtaBounds_(associationNetworkEtaBounds),
-          associationNetworkZ0ResBins_(associationNetworkZ0ResBins),
           nFinalSort_(nFinalSort),
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
@@ -261,15 +245,7 @@ namespace l1ct {
 
     // NNVtx Association:
     bool useMLAssociation_;
-    double associationThreshold_;
-    std::string associationGraphPath_;
-    std::vector<double> associationNetworkZ0binning_, associationNetworkEtaBounds_, associationNetworkZ0ResBins_;
     std::unique_ptr<NNVtxAssoc> nnVtxAssoc_;
-    tensorflow::GraphDef *associationGraph_;
-    tensorflow::Session *associationSesh_;
-#ifdef CMSSW_GIT_HASH
-    edm::ParameterSet nnVtxAssocPSet_;
-#endif
 
     unsigned int nFinalSort_;  // output after a full sort of charged + neutral
     SortAlgo finalSortAlgo_;
