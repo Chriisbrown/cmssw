@@ -9,13 +9,15 @@
 // Created:      February 2025
 
 #include <string>
-#include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
 #include "DataFormats/L1TParticleFlow/interface/layer1_emulator.h"
 
 namespace edm {
   class ParameterSet;
   class ParameterSetDescription;
 }  // namespace edm
+namespace tensorflow {
+  class Session;
+}  // namespace tensorflow
 using namespace l1ct;
 
 class NNVtxAssoc {
@@ -25,8 +27,6 @@ public:
              const std::vector<double>& AssociationNetworkZ0binning,
              const std::vector<double>& AssociationNetworkEtaBounds,
              const std::vector<double>& AssociationNetworkZ0ResBins);
-  NNVtxAssoc() {};
-  ~NNVtxAssoc() {};
 
   void NNVtxAssocDebug();
   static edm::ParameterSetDescription getParameterSetDescription();

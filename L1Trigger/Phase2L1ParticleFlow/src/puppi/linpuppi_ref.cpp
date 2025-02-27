@@ -216,8 +216,6 @@ edm::ParameterSetDescription l1ct::LinPuppiEmulator::getParameterSetDescription(
   description.addUntracked<bool>("debug", false);
   return description;
 }
-
-l1ct::LinPuppiEmulator::~LinPuppiEmulator() {}
 #endif
 
 void l1ct::LinPuppiEmulator::puppisort_and_crop_ref(unsigned int nOutMax,

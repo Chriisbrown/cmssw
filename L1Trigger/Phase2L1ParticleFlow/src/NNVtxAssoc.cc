@@ -7,6 +7,7 @@
 
 #include "L1Trigger/Phase2L1ParticleFlow/interface/NNVtxAssoc.h"
 #include "DataFormats/L1TParticleFlow/interface/PFTrack.h"
+#include "PhysicsTools/TensorFlow/interface/TensorFlow.h"
 #include <iomanip>
 
 NNVtxAssoc::NNVtxAssoc(std::string AssociationGraphPath,

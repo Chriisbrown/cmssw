@@ -6,6 +6,7 @@
 
 #include <vector>
 #include "L1Trigger/Phase2L1ParticleFlow/interface/NNVtxAssoc.h"
+#include <memory>
 
 namespace edm {
   class ParameterSet;
@@ -168,8 +169,6 @@ namespace l1ct {
           fakePuppi_(false) {}
 
     LinPuppiEmulator(const edm::ParameterSet &iConfig);
-
-    ~LinPuppiEmulator();
 
     static edm::ParameterSetDescription getParameterSetDescription();
 
