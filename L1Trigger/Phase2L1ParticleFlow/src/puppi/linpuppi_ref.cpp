@@ -478,12 +478,12 @@ void l1ct::LinPuppiEmulator::linpuppi_ref(const PFRegionEmu &region,
           int ppZMin = std::abs(int(track[it].hwZ0 - pv[v].hwZ0));
           if (pZMin > ppZMin)
             pZMin = ppZMin;
-            if (useMLAssociation_){
-              pass_network = true;
-              #ifdef CMSSW_GIT_HASH
-                pass_network = nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::PFChargedObjEmu>(region, pfch[i], pv[j]);
-              #endif
-            }
+          if (useMLAssociation_){
+            pass_network = true;
+            #ifdef CMSSW_GIT_HASH
+              pass_network = nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::TkObjEmu>(region, track[it], pv[v]);
+            #endif
+          }
         }
       }
       if (useMLAssociation_ && !pass_network)
@@ -636,12 +636,12 @@ void l1ct::LinPuppiEmulator::linpuppi_flt(const PFRegionEmu &region,
         int ppZMin = std::abs(int(track[it].hwZ0 - pv[v].hwZ0));
         if (pZMin > ppZMin)
           pZMin = ppZMin;
-          if (useMLAssociation_){
-            pass_network = true;
-            #ifdef CMSSW_GIT_HASH
-              pass_network = nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::PFChargedObjEmu>(region, pfch[i], pv[j]);
-            #endif
-          }
+        if (useMLAssociation_){
+          pass_network = true;
+          #ifdef CMSSW_GIT_HASH
+            pass_network = nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::TkObjEmu>(region, track[it], pv[v]);
+          #endif
+        }
       }
       if (useMLAssociation_ && !pass_network)
         continue;
