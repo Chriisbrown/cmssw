@@ -69,6 +69,7 @@ namespace l1ct {
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
           fakePuppi_(false) {
+      #ifdef CMSSW_GIT_HASH
       if (useMLAssociation_) {
         nnVtxAssoc_ = std::make_unique<NNVtxAssoc>(NNVtxAssoc(associationGraphPath,
                                                               associationThreshold,
@@ -76,6 +77,7 @@ namespace l1ct {
                                                               associationNetworkEtaBounds,
                                                               associationNetworkZ0ResBins));
       }
+      #endif
     }
 
     LinPuppiEmulator(unsigned int nTrack,
@@ -261,3 +263,4 @@ namespace l1ct {
 }  // namespace l1ct
 
 #endif
+

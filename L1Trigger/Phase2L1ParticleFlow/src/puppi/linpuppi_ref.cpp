@@ -103,13 +103,16 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
   ptCut_[0] = ptCut_0;
   ptCut_[1] = ptCut_1;
 
+  #ifdef CMSSW_GIT_HASH
   if (useMLAssociation_) {
     nnVtxAssoc_ = std::make_unique<NNVtxAssoc>(NNVtxAssoc(associationGraphPath,
                                                           associationThreshold,
                                                           associationNetworkZ0binning,
                                                           associationNetworkEtaBounds,
                                                           associationNetworkZ0ResBins));
+  
   }
+  #endif
 }
 
 #ifdef CMSSW_GIT_HASH
@@ -264,9 +267,12 @@ void l1ct::LinPuppiEmulator::linpuppi_chs_ref(const PFRegionEmu &region,
       int pZ0Diff = pZ0 - pv[j].hwZ0;
       if (std::abs(z0diff) > std::abs(pZ0Diff))
         z0diff = pZ0Diff;
-      if (useMLAssociation_ &&
-          nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::PFChargedObjEmu>(region, pfch[i], pv[j]) == 1)
+      if (useMLAssociation_){
         pass_network = true;
+      #ifdef CMSSW_GIT_HASH
+        pass_network = nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::PFChargedObjEmu>(region, pfch[i], pv[j]);
+      #endif
+      }
     }
     bool accept = pfch[i].hwPt != 0;
     if (!fakePuppi_ && !useMLAssociation_)
@@ -472,9 +478,12 @@ void l1ct::LinPuppiEmulator::linpuppi_ref(const PFRegionEmu &region,
           int ppZMin = std::abs(int(track[it].hwZ0 - pv[v].hwZ0));
           if (pZMin > ppZMin)
             pZMin = ppZMin;
-          if (useMLAssociation_ &&
-              nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::TkObjEmu>(region, track[it], pv[v]) == 1)
-            pass_network = true;
+            if (useMLAssociation_){
+              pass_network = true;
+              #ifdef CMSSW_GIT_HASH
+                pass_network = nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::PFChargedObjEmu>(region, pfch[i], pv[j]);
+              #endif
+            }
         }
       }
       if (useMLAssociation_ && !pass_network)
@@ -627,9 +636,12 @@ void l1ct::LinPuppiEmulator::linpuppi_flt(const PFRegionEmu &region,
         int ppZMin = std::abs(int(track[it].hwZ0 - pv[v].hwZ0));
         if (pZMin > ppZMin)
           pZMin = ppZMin;
-        if (useMLAssociation_ &&
-            nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::TkObjEmu>(region, track[it], pv[v]) == 1)
-          pass_network = true;
+          if (useMLAssociation_){
+            pass_network = true;
+            #ifdef CMSSW_GIT_HASH
+              pass_network = nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::PFChargedObjEmu>(region, pfch[i], pv[j]);
+            #endif
+          }
       }
       if (useMLAssociation_ && !pass_network)
         continue;
@@ -686,3 +698,4 @@ void l1ct::LinPuppiEmulator::run(const PFInputRegion &in,
     fwdlinpuppi_ref(in.region, in.hadcalo, outallne_nocut, outallne, out.puppi);
   }
 }
+
