@@ -32,8 +32,6 @@ void L1TNNVtxAssoc::setNNVectorVar() {
   NNvectorVar_.push_back(fResBin_);                          // pt log
   NNvectorVar_.push_back(fDz_);                            //dEta from jet axis
 
-  std::cout << fPt_ << " | " << fResBin_ << " | " << fMVA_ << " | " << fDz_ << std::endl;
-
     if (isDebugEnabled_) {
       LogDebug("L1TNNVtxAssoc") 
                                 << "pT: " << NNvectorVar_[0 ]
@@ -94,8 +92,6 @@ bool L1TNNVtxAssoc::computeFixed(const PFRegionEmu& region, T& t, const l1ct::PV
   fResBin_=  res_bins_[resbin] / 16;
   fMVA_ = 0;
   fDz_ = dZ;
-
-  std::cout << fPt_ << " | " << fResBin_ << " | " << fMVA_ << " | " << fDz_ << std::endl;
 
   // Deal with this template class using 2 different objects (t) which have different calls to their PFTracks:
   const l1t::PFTrack* srcTrack = NULL;
