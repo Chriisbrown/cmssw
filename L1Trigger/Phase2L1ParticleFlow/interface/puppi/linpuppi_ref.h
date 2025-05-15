@@ -2,9 +2,12 @@
 #define LINPUPPI_REF_H
 
 #include "DataFormats/L1TParticleFlow/interface/layer1_emulator.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "linpuppi_bits.h"
 
 #include <vector>
+#include "L1Trigger/Phase2L1ParticleFlow/interface/L1TNNVtxAssoc.h"
+
 
 namespace edm {
   class ParameterSet;
@@ -35,6 +38,9 @@ namespace l1ct {
                      double priorNe,
                      double priorPh,
                      pt_t ptCut,
+                     bool useL1TNNVtxAssociation,
+                     double associationThreshold,
+                     std::string associationModelPath,
                      unsigned int nFinalSort = 0,
                      SortAlgo finalSortAlgo = SortAlgo::Insertion)
         : nTrack_(nTrack),
@@ -56,10 +62,24 @@ namespace l1ct {
           priorNe_(1, priorNe),
           priorPh_(1, priorPh),
           ptCut_(1, ptCut),
+          useMLAssociation_(useL1TNNVtxAssociation),
+          associationThreshold_(associationThreshold),
           nFinalSort_(nFinalSort ? nFinalSort : nOut),
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
-          fakePuppi_(false) {}
+          fakePuppi_(false) {
+            if (useMLAssociation_) {
+              hls4mlEmulator::ModelLoader loader(associationModelPath);
+              try {
+                std::shared_ptr<hls4mlEmulator::Model> model = loader.load_model();
+                nnVtxAssoc_ = std::make_unique<L1TNNVtxAssoc>(L1TNNVtxAssoc(model, debug_));
+                std::cout << "loaded model h 1" << loader.model_name() << std::endl;
+              } catch (std::runtime_error& e) {
+                throw cms::Exception("ModelError") << " ERROR: failed to load L1TNNVtxAssoc model version \"" 
+                                                   << "\". Model version not found in cms-hls4ml externals.";
+              }
+            }
+      }
 
     LinPuppiEmulator(unsigned int nTrack,
                      unsigned int nIn,
@@ -90,6 +110,9 @@ namespace l1ct {
                      double priorPh_1,
                      pt_t ptCut_0,
                      pt_t ptCut_1,
+                     bool useL1TNNVtxAssociation,
+                     double associationThreshold,
+                     const std::string associationModelPath,
                      unsigned int nFinalSort = 0,
                      SortAlgo finalSortAlgo = SortAlgo::Insertion);
 
@@ -112,6 +135,9 @@ namespace l1ct {
                      const std::vector<double> &priorNe,
                      const std::vector<double> &priorPh,
                      const std::vector<pt_t> &ptCut,
+                     bool useL1TNNVtxAssociation,
+                     double associationThreshold,
+                     const std::string associationModelPath,
                      unsigned int nFinalSort,
                      SortAlgo finalSortAlgo)
         : nTrack_(nTrack),
@@ -133,10 +159,24 @@ namespace l1ct {
           priorNe_(priorNe),
           priorPh_(priorPh),
           ptCut_(ptCut),
+          useMLAssociation_(useL1TNNVtxAssociation),
+          associationThreshold_(associationThreshold),
           nFinalSort_(nFinalSort),
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
-          fakePuppi_(false) {}
+          fakePuppi_(false) {
+            if (useMLAssociation_) {
+              hls4mlEmulator::ModelLoader loader(associationModelPath);
+              try {
+                std::shared_ptr<hls4mlEmulator::Model> model = loader.load_model();
+                std::cout << "loaded model h 2" << loader.model_name() << std::endl;
+                nnVtxAssoc_ = std::make_unique<L1TNNVtxAssoc>(L1TNNVtxAssoc(model, debug_));
+              } catch (std::runtime_error& e) {
+                throw cms::Exception("ModelError") << " ERROR: failed to load L1TNNVtxAssoc model version \"" 
+                                                   << "\". Model version not found in cms-hls4ml externals.";
+              }
+            }
+          }
 
     LinPuppiEmulator(const edm::ParameterSet &iConfig);
 
@@ -211,6 +251,13 @@ namespace l1ct {
     std::vector<double> alphaSlope_, alphaZero_, alphaCrop_;
     std::vector<double> priorNe_, priorPh_;
     std::vector<pt_t> ptCut_;
+
+    bool useMLAssociation_;
+    double associationThreshold_;
+    std::unique_ptr<L1TNNVtxAssoc> nnVtxAssoc_;
+    std::shared_ptr<hls4mlEmulator::Model> model;
+    hls4mlEmulator::ModelLoader loader;
+
     unsigned int nFinalSort_;  // output after a full sort of charged + neutral
     SortAlgo finalSortAlgo_;
 
@@ -221,8 +268,8 @@ namespace l1ct {
     std::pair<pt_t, puppiWgt_t> sum2puppiPt_ref(
         linpuppi::sumTerm_t sum, pt_t pt, unsigned int ieta, bool isEM, int icand) const;
     std::pair<float, float> sum2puppiPt_flt(float sum, float pt, unsigned int ieta, bool isEM, int icand) const;
-  };
 
+  };
 }  // namespace l1ct
 
 #endif

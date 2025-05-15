@@ -15,6 +15,8 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #endif
 
+#include "L1Trigger/Phase2L1ParticleFlow/interface/L1TNNVtxAssoc.h"
+
 using namespace l1ct;
 using namespace linpuppi;
 
@@ -47,6 +49,9 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
                                          double priorPh_1,
                                          pt_t ptCut_0,
                                          pt_t ptCut_1,
+                                         bool useL1TNNVtxAssociation,
+                                         double associationThreshold,
+                                         const std::string associationModelPath,
                                          unsigned int nFinalSort,
                                          SortAlgo finalSortAlgo)
     : nTrack_(nTrack),
@@ -68,6 +73,8 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
       priorNe_(2),
       priorPh_(2),
       ptCut_(2),
+      useMLAssociation_(useL1TNNVtxAssociation),
+      associationThreshold_(associationThreshold),
       nFinalSort_(nFinalSort ? nFinalSort : nOut),
       finalSortAlgo_(finalSortAlgo),
       debug_(false),
@@ -92,6 +99,19 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
   priorPh_[1] = priorPh_1;
   ptCut_[0] = ptCut_0;
   ptCut_[1] = ptCut_1;
+
+  if (useMLAssociation_) {
+    hls4mlEmulator::ModelLoader loader(associationModelPath);
+    try {
+      std::shared_ptr<hls4mlEmulator::Model> model = loader.load_model();
+      std::cout << "loaded model 1 cpp" << loader.model_name() << std::endl;
+      nnVtxAssoc_ = std::make_unique<L1TNNVtxAssoc>(L1TNNVtxAssoc(model, debug_));
+    } catch (std::runtime_error& e) {
+      throw cms::Exception("ModelError") << " ERROR: failed to load L1TNNVtxAssoc model version \""
+                                         << "\". Model version not found in cms-hls4ml externals.";
+    }
+
+  }
 }
 
 #ifdef CMSSW_GIT_HASH
@@ -116,6 +136,9 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(const edm::ParameterSet &iConfig)
       priorNe_(iConfig.getParameter<std::vector<double>>("priors")),
       priorPh_(iConfig.getParameter<std::vector<double>>("priorsPhoton")),
       ptCut_(edm::vector_transform(iConfig.getParameter<std::vector<double>>("ptCut"), l1ct::Scales::makePtFromFloat)),
+      useMLAssociation_(iConfig.getParameter<bool>("useL1TNNVtxAssociation")),
+      associationThreshold_(iConfig.getParameter<double>("L1TNNVtxAssociationThreshold")),
+      loader(hls4mlEmulator::ModelLoader(iConfig.getParameter<std::string>("L1TNNVtxAssociationModelPath"))),
       nFinalSort_(iConfig.getParameter<uint32_t>("nFinalSort")),
       debug_(iConfig.getUntrackedParameter<bool>("debug", false)),
       fakePuppi_(iConfig.getParameter<bool>("fakePuppi")) {
@@ -139,6 +162,21 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(const edm::ParameterSet &iConfig)
     throw cms::Exception("Configuration", "size mismatch for alphaCrop parameter");
   if (absEtaBins_.size() + 1 != ptCut_.size())
     throw cms::Exception("Configuration", "size mismatch for ptCut parameter");
+
+  if (useMLAssociation_) {
+      try {
+        model = loader.load_model();
+        nnVtxAssoc_ = std::make_unique<L1TNNVtxAssoc>(L1TNNVtxAssoc(model, debug_));
+        std::cout << model.get() << std::endl;
+        std::cout << "loaded model 2 cpp" << loader.model_name() << std::endl;
+        
+      } catch (std::runtime_error& e) {
+        throw cms::Exception("ModelError") << " ERROR: failed to load L1TNNVtxAssoc model version \""
+                                           << "\". Model version not found in cms-hls4ml externals.";
+      }
+  
+  }
+  
   const std::string &sortAlgo = iConfig.getParameter<std::string>("finalSortAlgo");
   if (sortAlgo == "Insertion")
     finalSortAlgo_ = SortAlgo::Insertion;
@@ -166,6 +204,9 @@ edm::ParameterSetDescription l1ct::LinPuppiEmulator::getParameterSetDescription(
   description.add<double>("ptMax");
   description.add<std::vector<double>>("absEtaCuts");
   description.add<std::vector<double>>("ptCut");
+  description.add<bool>("useL1TNNVtxAssociation");
+  description.add<double>("L1TNNVtxAssociationThreshold");
+  description.add<std::string>("L1TNNVtxAssociationModelPath");
   description.add<std::vector<double>>("ptSlopes");
   description.add<std::vector<double>>("ptSlopesPhoton");
   description.add<std::vector<double>>("ptZeros");
@@ -226,14 +267,21 @@ void l1ct::LinPuppiEmulator::linpuppi_chs_ref(const PFRegionEmu &region,
   for (unsigned int i = 0; i < nTrack; ++i) {
     int pZ0 = pfch[i].hwZ0;
     int z0diff = -99999;
+    bool pass_network = false;
     for (unsigned int j = 0; j < nVtx; ++j) {
       int pZ0Diff = pZ0 - pv[j].hwZ0;
       if (std::abs(z0diff) > std::abs(pZ0Diff))
         z0diff = pZ0Diff;
+      if (useMLAssociation_){
+          pass_network = true;
+          pass_network = nnVtxAssoc_->computeFixed<const l1ct::PFChargedObjEmu>(region, pfch[i], pv[j], associationThreshold_ );
+        }
     }
     bool accept = pfch[i].hwPt != 0;
-    if (!fakePuppi_)
+    if (!fakePuppi_ && !useMLAssociation_)
       accept = accept && region.isFiducial(pfch[i]) && (std::abs(z0diff) <= int(dzCut_) || pfch[i].hwId.isMuon());
+    if (!fakePuppi_ && useMLAssociation_)
+      accept = accept && region.isFiducial(pfch[i]) && (pass_network || pfch[i].hwId.isMuon());
     if (accept) {
       outallch[i].fill(region, pfch[i]);
       if (fakePuppi_) {                           // overwrite Dxy & TkQuality with debug information
@@ -427,14 +475,20 @@ void l1ct::LinPuppiEmulator::linpuppi_ref(const PFRegionEmu &region,
         continue;
 
       int pZMin = 99999;
+      bool pass_network = false;
       for (unsigned int v = 0; v < nVtx_; ++v) {
         if (v < pv.size()) {
           int ppZMin = std::abs(int(track[it].hwZ0 - pv[v].hwZ0));
           if (pZMin > ppZMin)
             pZMin = ppZMin;
+          if (useMLAssociation_){
+            pass_network = nnVtxAssoc_->computeFixed<const l1ct::TkObjEmu>(region, track[it], pv[v], associationThreshold_);
+          }
         }
       }
-      if (std::abs(pZMin) > int(dzCut_))
+      if (useMLAssociation_ && !pass_network)
+        continue;
+      if (!useMLAssociation_ && std::abs(pZMin) > int(dzCut_))
         continue;
       unsigned int dr2 = dr2_int(pfallne[in].hwEta, pfallne[in].hwPhi, track[it].hwEta, track[it].hwPhi);
       if (dr2 <= dR2Max_) {                                             // if dr is inside puppi cone
@@ -577,12 +631,18 @@ void l1ct::LinPuppiEmulator::linpuppi_flt(const PFRegionEmu &region,
         continue;
 
       int pZMin = 99999;
+      bool pass_network = false;
       for (unsigned int v = 0, nVtx = std::min<unsigned int>(nVtx_, pv.size()); v < nVtx; ++v) {
         int ppZMin = std::abs(int(track[it].hwZ0 - pv[v].hwZ0));
         if (pZMin > ppZMin)
           pZMin = ppZMin;
+        if (useMLAssociation_){
+            pass_network = nnVtxAssoc_->computeFixed<const l1ct::TkObjEmu>(region, track[it], pv[v], associationThreshold_);
+          }
       }
-      if (std::abs(pZMin) > int(dzCut_))
+      if (useMLAssociation_ && !pass_network)
+        continue;
+      if (!useMLAssociation_ && std::abs(pZMin) > int(dzCut_))
         continue;
       unsigned int dr2 = dr2_int(
           pfallne[in].hwEta, pfallne[in].hwPhi, track[it].hwEta, track[it].hwPhi);  // if dr is inside puppi cone
