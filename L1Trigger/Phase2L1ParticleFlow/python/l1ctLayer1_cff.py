@@ -11,7 +11,7 @@ from L1Trigger.Phase2L1ParticleFlow.l1TkEgAlgoEmulator_cfi import tkEgAlgoParame
 
 from L1Trigger.Phase2L1ParticleFlow.l1tNNVtxAssociation_cfi import L1TNNVtxAssociationPSet
 
-switchOnNNAssoc = cms.bool(True)
+switchOnNNAssoc = cms.bool(False)
 
 l1tLayer1Barrel = cms.EDProducer("L1TCorrelatorLayer1Producer",
     tracks = cms.InputTag('l1tPFTracksFromL1Tracks'),
