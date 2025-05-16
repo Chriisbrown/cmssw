@@ -51,7 +51,6 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
                                          pt_t ptCut_1,
                                          bool useL1TNNVtxAssociation,
                                          double associationThreshold,
-                                         const std::string associationModelPath,
                                          unsigned int nFinalSort,
                                          SortAlgo finalSortAlgo)
     : nTrack_(nTrack),
@@ -99,19 +98,6 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
   priorPh_[1] = priorPh_1;
   ptCut_[0] = ptCut_0;
   ptCut_[1] = ptCut_1;
-
-  if (useMLAssociation_) {
-    hls4mlEmulator::ModelLoader loader(associationModelPath);
-    try {
-      std::shared_ptr<hls4mlEmulator::Model> model = loader.load_model();
-      std::cout << "loaded model 1 cpp" << loader.model_name() << std::endl;
-      nnVtxAssoc_ = std::make_unique<L1TNNVtxAssoc>(L1TNNVtxAssoc(model, debug_));
-    } catch (std::runtime_error& e) {
-      throw cms::Exception("ModelError") << " ERROR: failed to load L1TNNVtxAssoc model version \""
-                                         << "\". Model version not found in cms-hls4ml externals.";
-    }
-
-  }
 }
 
 #ifdef CMSSW_GIT_HASH
@@ -166,10 +152,7 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(const edm::ParameterSet &iConfig)
   if (useMLAssociation_) {
       try {
         model = loader.load_model();
-        nnVtxAssoc_ = std::make_unique<L1TNNVtxAssoc>(L1TNNVtxAssoc(model, debug_));
-        std::cout << model.get() << std::endl;
-        std::cout << "loaded model 2 cpp" << loader.model_name() << std::endl;
-        
+        nnVtxAssoc_ = std::make_unique<L1TNNVtxAssoc>(L1TNNVtxAssoc(model, debug_));        
       } catch (std::runtime_error& e) {
         throw cms::Exception("ModelError") << " ERROR: failed to load L1TNNVtxAssoc model version \""
                                            << "\". Model version not found in cms-hls4ml externals.";
