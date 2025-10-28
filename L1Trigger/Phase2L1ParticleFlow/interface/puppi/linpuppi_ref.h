@@ -44,7 +44,6 @@ namespace l1ct {
                      pt_t ptCut,
                      bool useMLAssociation = false,
                      const double associationThreshold = 0.0,
-                     std::string associationGraphPath = "",
                      std::vector<double> associationNetworkZ0binning = {},
                      std::vector<double> associationNetworkEtaBounds = {},
                      std::vector<double> associationNetworkZ0ResBins = {},
@@ -73,15 +72,7 @@ namespace l1ct {
           nFinalSort_(nFinalSort ? nFinalSort : nOut),
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
-          fakePuppi_(false) {
-      if (useMLAssociation_ and withinCMSSW_) {
-        nnVtxAssoc_ = std::make_unique<NNVtxAssoc>(NNVtxAssoc(associationGraphPath,
-                                                              associationThreshold,
-                                                              associationNetworkZ0binning,
-                                                              associationNetworkEtaBounds,
-                                                              associationNetworkZ0ResBins));
-      }
-    }
+          fakePuppi_(false) {}
 
     LinPuppiEmulator(unsigned int nTrack,
                      unsigned int nIn,
@@ -114,7 +105,6 @@ namespace l1ct {
                      pt_t ptCut_1,
                      bool useMLAssociation = false,
                      const double associationThreshold = 0.0,
-                     std::string associationGraphPath = "",
                      std::vector<double> associationNetworkZ0binning = {},
                      std::vector<double> associationNetworkEtaBounds = {},
                      std::vector<double> associationNetworkZ0ResBins = {},
@@ -142,7 +132,6 @@ namespace l1ct {
                      const std::vector<pt_t> &ptCut,
                      bool useMLAssociation,
                      const double associationThreshold,
-                     std::string associationGraphPath,
                      std::vector<double> associationNetworkZ0binning,
                      std::vector<double> associationNetworkEtaBounds,
                      std::vector<double> associationNetworkZ0ResBins,
@@ -250,6 +239,8 @@ namespace l1ct {
     // NNVtx Association:
     bool useMLAssociation_;
     std::unique_ptr<NNVtxAssoc> nnVtxAssoc_;
+    std::shared_ptr<hls4mlEmulator::Model> model;
+    hls4mlEmulator::ModelLoader loader;
 
     unsigned int nFinalSort_;  // output after a full sort of charged + neutral
     SortAlgo finalSortAlgo_;

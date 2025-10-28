@@ -9,37 +9,57 @@
 // Created:      February 2025
 
 #include <string>
+#include <iomanip>
 #include "DataFormats/L1TParticleFlow/interface/layer1_emulator.h"
+
+//HLS4ML compiled emulator modeling
+#include "ap_fixed.h"
+#include "hls4ml/emulator.h"
 
 namespace edm {
   class ParameterSet;
   class ParameterSetDescription;
 }  // namespace edm
-namespace tensorflow {
-  class Session;
-}  // namespace tensorflow
 using namespace l1ct;
 
 class NNVtxAssoc {
 public:
-  NNVtxAssoc(std::string AssociationGraphPath,
+  NNVtxAssoc(const std::shared_ptr<hls4mlEmulator::Model> model, 
              const double AssociationThreshold,
              const std::vector<double>& AssociationNetworkZ0binning,
              const std::vector<double>& AssociationNetworkEtaBounds,
-             const std::vector<double>& AssociationNetworkZ0ResBins);
-
+             const std::vector<double>& AssociationNetworkZ0ResBins,
+             bool debug);
   void NNVtxAssocDebug();
+
+  typedef ap_ufixed<22,9> inputtype;
+  typedef ap_fixed<22,9> classtype;
+
+  void setNNVectorVar();
+  bool EvaluateNNFixed();
   static edm::ParameterSetDescription getParameterSetDescription();
 
   template <typename T>
   bool TTTrackNetworkSelector(const PFRegionEmu& region, const T& t, const l1ct::PVObjEmu& v);
 
 private:
-  tensorflow::Session* associationSesh_;
+  std::vector<inputtype> NNvectorVar_;
+  float fPt_;
+  float fMVA_;
+  float fResBin_;
+  float fDz_;
+
   double associationThreshold_;
-  std::vector<double> z0_binning_;
+
+  std::vector<double> z0_binning_ ;
   std::vector<double> eta_bins_;
   std::vector<double> res_bins_;
+
+  std::shared_ptr<hls4mlEmulator::Model> modelRef_;
+
   std::stringstream log_;
+
+  bool isDebugEnabled_;
+
 };
 #endif

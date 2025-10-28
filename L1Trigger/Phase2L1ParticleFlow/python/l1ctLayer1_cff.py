@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 import math
-
+import os
 from L1Trigger.Phase2L1ParticleFlow.l1tPFTracksFromL1Tracks_cfi import l1tPFTracksFromL1Tracks, l1tPFTracksFromL1TracksExtended
 from L1Trigger.Phase2L1ParticleFlow.l1tPFClustersFromL1EGClusters_cfi import l1tPFClustersFromL1EGClusters
 from L1Trigger.Phase2L1ParticleFlow.pfClustersFromCombinedCalo_cff import l1tPFClustersFromCombinedCaloHCal, l1tPFClustersFromCombinedCaloHF
@@ -9,7 +9,7 @@ from L1Trigger.Phase2L1ParticleFlow.pfClustersFromCombinedCalo_cff import l1tPFC
 from L1Trigger.Phase2L1ParticleFlow.l1TkEgAlgoEmulator_cfi import tkEgAlgoParameters,tkEgSorterParameters
 
 from L1Trigger.Phase2L1ParticleFlow.mlAssociation_cfi import NNVtxAssociationPSet
-switchOnNNAssoc = cms.bool(False)
+switchOnNNAssoc = cms.bool(True)
 
 l1tLayer1Barrel = cms.EDProducer("L1TCorrelatorLayer1Producer",
     tracks = cms.InputTag('l1tPFTracksFromL1Tracks'),
@@ -412,6 +412,7 @@ l1tLayer1HGCalNoTK = cms.EDProducer("L1TCorrelatorLayer1Producer",
         priors             = cms.vdouble( 7.0 ),
         priorsPhoton      = cms.vdouble( 5.0 ), #When e/g ID not applied, use: cms.vdouble( 3.5, 3.5, 7.0 ),
         useMLAssociation = switchOnNNAssoc, #Enable Association Network
+        #associationPath = cms.string(os.environ["CMSSW_BASE"]+"/src/L1TNNVtx_Assoc_Model/L1TNNVtx_Assoc_Model_v0"),
         NNVtxAssociation = NNVtxAssociationPSet,
     ),
     tkEgAlgoParameters = tkEgAlgoParameters.clone(
