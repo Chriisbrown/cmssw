@@ -2,10 +2,10 @@
 #define LINPUPPI_REF_H
 
 #include "DataFormats/L1TParticleFlow/interface/layer1_emulator.h"
+#include "L1Trigger/Phase2L1ParticleFlow/interface/NNVtxAssoc.h"
 #include "linpuppi_bits.h"
 
 #include <vector>
-#include "L1Trigger/Phase2L1ParticleFlow/interface/NNVtxAssoc.h"
 #include <memory>
 
 namespace edm {
@@ -218,6 +218,12 @@ namespace l1ct {
                                        std::vector<PuppiObjEmu> &out,
                                        SortAlgo algo = SortAlgo::Insertion);
 
+    void linpuppi_associate_trk(const PFRegionEmu &region,
+                                const std::vector<TkObjEmu> &trk /*[nTrack]*/,
+                                const std::vector<PVObjEmu> &pv /*[nVtx]*/,
+                                std::vector<PFChargedObjEmu> &outpfobj,
+                                std::vector<TkObjEmu> &outtrack ) const;
+
     // for CMSSW
     void run(const PFInputRegion &in, const std::vector<l1ct::PVObjEmu> &pvs, OutputRegion &out) const;
 
@@ -235,12 +241,15 @@ namespace l1ct {
     std::vector<double> alphaSlope_, alphaZero_, alphaCrop_;
     std::vector<double> priorNe_, priorPh_;
     std::vector<pt_t> ptCut_;
-
-    // NNVtx Association:
+    
     bool useMLAssociation_;
-    std::unique_ptr<NNVtxAssoc> nnVtxAssoc_;
-    std::shared_ptr<hls4mlEmulator::Model> model;
-    hls4mlEmulator::ModelLoader loader;
+    float associationThreshold_ = 0;
+
+    #ifdef CMSSW_GIT_HASH    // NNVtx Association:
+      std::unique_ptr<NNVtxAssoc> nnVtxAssoc_;
+      std::shared_ptr<hls4mlEmulator::Model> model;
+      hls4mlEmulator::ModelLoader loader;
+    #endif
 
     unsigned int nFinalSort_;  // output after a full sort of charged + neutral
     SortAlgo finalSortAlgo_;

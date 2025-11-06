@@ -3,7 +3,7 @@ from L1Trigger.VertexFinder.l1tVertexProducer_cfi import l1tVertexProducer
 import os
 # NNVertex Association Variables
 NNVtxAssociationPSet = cms.PSet(
-    associationThreshold = cms.double(0.1), #Association Network threshold for PV tracks
+    associationThreshold = cms.double(0.0), #Association Network threshold for PV tracks
     #nnassociationPath = cms.string("L1Trigger/L1TTrackMatch/data/NNVtx_AssociationModelGraph.pb"),
     associationNetworkPath = cms.string(os.environ["CMSSW_BASE"]+"/src/L1TNNVtx_Assoc_Model/L1TNNVtx_Assoc_Model_v0"),
     associationNetworkZ0binning = l1tVertexProducer.VertexReconstruction.FH_HistogramParameters, #Z0 binning used for setting the input feature digitisation

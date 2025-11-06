@@ -36,11 +36,11 @@ public:
   typedef ap_fixed<22,9> classtype;
 
   void setNNVectorVar();
-  bool EvaluateNNFixed();
+  bool EvaluateNNFixed(float& score);
   static edm::ParameterSetDescription getParameterSetDescription();
 
   template <typename T>
-  bool TTTrackNetworkSelector(const PFRegionEmu& region, const T& t, const l1ct::PVObjEmu& v);
+  bool TTTrackNetworkSelector(const PFRegionEmu& region, const T& t, const l1ct::PVObjEmu& v,float& score);
 
 private:
   std::vector<inputtype> NNvectorVar_;

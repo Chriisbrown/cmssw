@@ -48,6 +48,8 @@ namespace l1ct {
     tkdeta_t hwDEta;  // relative to the region center, at calo
     tkdphi_t hwDPhi;  // relative to the region center, at calo
     tkquality_t hwTkQuality;
+    nn_assoc_t hwAssociationScore;
+    bool hwAssociation;
 
     phi_t hwVtxPhi() const { return hwId.chargeOrNull() ? hwPhi + hwDPhi : hwPhi - hwDPhi; }
     eta_t hwVtxEta() const { return hwEta + hwDEta; }
@@ -55,7 +57,9 @@ namespace l1ct {
     inline bool operator==(const PFChargedObj &other) const {
       return hwPt == other.hwPt && hwEta == other.hwEta && hwPhi == other.hwPhi && hwId == other.hwId &&
              hwDEta == other.hwDEta && hwDPhi == other.hwDPhi && hwZ0 == other.hwZ0 && hwDxy == other.hwDxy &&
-             hwTkQuality == other.hwTkQuality;
+             hwTkQuality == other.hwTkQuality &&
+             hwAssociationScore == other.hwAssociationScore &&
+             hwAssociation == other.hwAssociation;
     }
 
     inline bool operator>(const PFChargedObj &other) const { return hwPt > other.hwPt; }
@@ -71,6 +75,9 @@ namespace l1ct {
       hwZ0 = 0;
       hwDxy = 0;
       hwTkQuality = 0;
+      hwAssociationScore = 0;
+      hwAssociation = 0;
+
     }
 
     int intVtxEta() const { return hwVtxEta().to_int(); }
@@ -81,6 +88,9 @@ namespace l1ct {
     float floatVtxPhi() const { return Scales::floatPhi(hwVtxPhi()); }
     float floatZ0() const { return Scales::floatZ0(hwZ0); }
     float floatDxy() const { return Scales::floatDxy(hwDxy); }
+    float floatAssociation() const { return hwAssociationScore.to_float(); }
+
+    void setAssociation(float association) { hwAssociationScore = (nn_assoc_t)(association); }
 
     static const int BITWIDTH =
         _PFCOMMON_BITWIDTH + tkdeta_t::width + tkdphi_t::width + z0_t::width + dxy_t::width + tkquality_t::width;
@@ -93,6 +103,8 @@ namespace l1ct {
       pack_into_bits(ret, start, hwZ0);
       pack_into_bits(ret, start, hwDxy);
       pack_into_bits(ret, start, hwTkQuality);
+      pack_into_bits(ret, start, hwAssociationScore);
+      pack_bool_into_bits(ret, start, hwAssociation);
       return ret;
     }
     inline static PFChargedObj unpack(const ap_uint<BITWIDTH> &src) {
@@ -104,6 +116,8 @@ namespace l1ct {
       unpack_from_bits(src, start, ret.hwZ0);
       unpack_from_bits(src, start, ret.hwDxy);
       unpack_from_bits(src, start, ret.hwTkQuality);
+      unpack_from_bits(src, start, ret.hwAssociationScore);
+      unpack_bool_from_bits(src, start, ret.hwAssociation);
       return ret;
     }
   };

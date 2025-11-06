@@ -63,7 +63,7 @@ void NNVtxAssoc::setNNVectorVar() {
     }
 }
 
-bool NNVtxAssoc::EvaluateNNFixed() {
+bool NNVtxAssoc::EvaluateNNFixed(float& score) {
   const int NInputs = 4;
   classtype classresult;
 
@@ -88,11 +88,12 @@ bool NNVtxAssoc::EvaluateNNFixed() {
                                 << std::endl;
     }
   float NNOutput_exp = 1.0 / (1.0 + exp(-1.0 * (modelResult_)));
+  score = NNOutput_exp;
   return NNOutput_exp >= associationThreshold_;
 }  //end EvaluateNNFixed
 
 template <typename T>
-bool NNVtxAssoc::TTTrackNetworkSelector(const PFRegionEmu& region, const T& t, const l1ct::PVObjEmu& v) {
+bool NNVtxAssoc::TTTrackNetworkSelector(const PFRegionEmu& region, const T& t, const l1ct::PVObjEmu& v, float& score) {
     auto lower = std::lower_bound(eta_bins_.begin(), eta_bins_.end(), region.floatGlbEta(t.hwVtxEta()));
 
     int resbin = std::distance(eta_bins_.begin(), lower);
@@ -117,7 +118,7 @@ bool NNVtxAssoc::TTTrackNetworkSelector(const PFRegionEmu& region, const T& t, c
       fMVA_ = srcTrack->trackWord().getMVAQualityBits();
 
     setNNVectorVar();
-    return EvaluateNNFixed();
+    return EvaluateNNFixed(score);
 }
 
 #ifdef CMSSW_GIT_HASH
@@ -155,7 +156,9 @@ void NNVtxAssoc::NNVtxAssocDebug() {
 
 template bool NNVtxAssoc::TTTrackNetworkSelector<const l1ct::TkObjEmu>(const PFRegionEmu&,
                                                                        const l1ct::TkObjEmu&,
-                                                                       const l1ct::PVObjEmu&);
+                                                                       const l1ct::PVObjEmu&,
+                                                                       float& score);
 template bool NNVtxAssoc::TTTrackNetworkSelector<const l1ct::PFChargedObjEmu>(const PFRegionEmu&,
                                                                               const l1ct::PFChargedObjEmu&,
-                                                                              const l1ct::PVObjEmu&);
+                                                                              const l1ct::PVObjEmu&,
+                                                                              float& score);

@@ -483,6 +483,9 @@ namespace l1ct {
     redChi2Bin_t hwRedChi2Bend;  // 4 bits
     stub_t hwStubs;
 
+    nn_assoc_t hwAssociationScore;
+    bool hwAssociation;
+
     enum TkQuality { PFLOOSE = 1, PFTIGHT = 2 };
     bool isPFLoose() const { return hwQuality[0]; }
     bool isPFTight() const { return hwQuality[1]; }
@@ -513,6 +516,8 @@ namespace l1ct {
       hwRedChi2RZ = 0;
       hwRedChi2Bend = 0;
       hwStubs = 0;
+      hwAssociationScore = 0 ;
+      hwAssociation = false;
     }
 
     int intPt() const { return Scales::intPt(hwPt); }
@@ -530,6 +535,9 @@ namespace l1ct {
     float floatVtxPhi() const { return Scales::floatPhi(hwVtxPhi()); }
     float floatZ0() const { return Scales::floatZ0(hwZ0); }
     float floatDxy() const { return Scales::floatDxy(hwDxy); }
+    nn_assoc_t gethwAssociationScore() const { return hwAssociationScore; }
+    bool gethwAssociation() const { return hwAssociation; }
+
 
     static const int BITWIDTH_SLIM = pt_t::width + eta_t::width + phi_t::width + tkdeta_t::width + tkdphi_t::width + 1 +
                                      z0_t::width + dxy_t::width + tkquality_t::width;
