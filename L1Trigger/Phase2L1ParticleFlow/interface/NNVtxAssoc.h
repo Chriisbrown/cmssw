@@ -42,6 +42,8 @@ public:
   template <typename T>
   bool TTTrackNetworkSelector(const PFRegionEmu& region, const T& t, const l1ct::PVObjEmu& v,float& score);
 
+  double getAssociationThreshold() {return associationThreshold_;}
+
 private:
   std::vector<inputtype> NNvectorVar_;
   float fPt_;
