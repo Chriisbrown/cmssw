@@ -459,13 +459,12 @@ void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,co
         #endif
         }
         else {
-          nnvtx_score = std::abs(int(trk[it].hwZ0 - pv[v].hwZ0)) < int(dzCut_);
+          nnvtx_score = std::abs(int(trk[it].hwZ0) - int(pv[v].hwZ0)) <= int(dzCut_);
         }
         pfobj[it].hwAssociationScore = nnvtx_score;
         pfobj[it].hwAssociation = nnvtx_score > associationThreshold;
-        outtrk.hwAssociationScore = nnvtx_score;
-        outtrk.hwAssociation = nnvtx_score > associationThreshold;
-        outtrack.push_back(outtrk);
+        outtrack[it].hwAssociationScore = nnvtx_score;
+        outtrack[it].hwAssociation = nnvtx_score > associationThreshold;
       }
   }  
 

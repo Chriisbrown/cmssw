@@ -93,7 +93,7 @@ namespace l1ct {
     void setAssociation(float association) { hwAssociationScore = (nn_assoc_t)(association); }
 
     static const int BITWIDTH =
-        _PFCOMMON_BITWIDTH + tkdeta_t::width + tkdphi_t::width + z0_t::width + dxy_t::width + tkquality_t::width;
+        _PFCOMMON_BITWIDTH + tkdeta_t::width + tkdphi_t::width + z0_t::width + dxy_t::width + tkquality_t::width + nn_assoc_t::width + 1;
     inline ap_uint<BITWIDTH> pack() const {
       ap_uint<BITWIDTH> ret;
       unsigned int start = 0;
