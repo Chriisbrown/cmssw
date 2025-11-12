@@ -9,7 +9,7 @@ from L1Trigger.Phase2L1ParticleFlow.pfClustersFromCombinedCalo_cff import l1tPFC
 from L1Trigger.Phase2L1ParticleFlow.l1TkEgAlgoEmulator_cfi import tkEgAlgoParameters,tkEgSorterParameters
 
 from L1Trigger.Phase2L1ParticleFlow.mlAssociation_cfi import NNVtxAssociationPSet
-switchOnNNAssoc = cms.bool(True)
+switchOnNNAssoc = cms.bool(False)
 
 l1tLayer1Barrel = cms.EDProducer("L1TCorrelatorLayer1Producer",
     tracks = cms.InputTag('l1tPFTracksFromL1Tracks'),

@@ -445,26 +445,27 @@ void l1ct::LinPuppiEmulator::fwdlinpuppi_ref(const PFRegionEmu &region,
 void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,const std::vector<TkObjEmu> &trk, const std::vector<PVObjEmu> &pv, std::vector<PFChargedObjEmu> &pfobj, std::vector<TkObjEmu> &outtrack) const {
   const unsigned int nTrack = trk.size();
   const unsigned int nVtx_ = pv.size();
-  float nnvtx_score = 0;
-  float associationThreshold = 0;
+  nn_assoc_t nnvtx_score = 0;
+  nn_assoc_t associationThreshold = 0;
   for (unsigned int it = 0; it < nTrack; ++it) {
       TkObjEmu outtrk = trk[it];
       for (unsigned int v = 0; v < nVtx_; ++v) {
         if (useMLAssociation_){
         #ifdef CMSSW_GIT_HASH
-          nnVtxAssoc_->TTTrackNetworkSelector<const l1ct::TkObjEmu>(region, trk[it], pv[v], nnvtx_score);
+          nnVtxAssoc_->TTTrackNetworkSelector(region, trk[it], pv[v], nnvtx_score);
           associationThreshold = nnVtxAssoc_->getAssociationThreshold();
-        #elif
-          NNVtxAssoc::TTTrackNetworkSelector<const l1ct::TkObjEmu>(region, trk[it], pv[v], nnvtx_score);
+        #else
+          EmuNetworkSelector(trk[it], pv[v], nnvtx_score);
         #endif
         }
         else {
           nnvtx_score = std::abs(int(trk[it].hwZ0) - int(pv[v].hwZ0)) <= int(dzCut_);
         }
         pfobj[it].hwAssociationScore = nnvtx_score;
-        pfobj[it].hwAssociation = nnvtx_score > associationThreshold;
+        pfobj[it].hwAssociation = 1 ? (nnvtx_score > associationThreshold) : 0;
+
         outtrack[it].hwAssociationScore = nnvtx_score;
-        outtrack[it].hwAssociation = nnvtx_score > associationThreshold;
+        outtrack[it].hwAssociation = 1 ? (nnvtx_score > associationThreshold) : 0;
       }
   }  
 

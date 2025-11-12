@@ -6,6 +6,8 @@
 // Created:      February 2025
 
 #include "L1Trigger/Phase2L1ParticleFlow/interface/NNVtxAssoc.h"
+
+#ifdef CMSSW_GIT_HASH
 #include "DataFormats/L1TParticleFlow/interface/PFTrack.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
@@ -19,14 +21,13 @@ NNVtxAssoc::NNVtxAssoc(const std::shared_ptr<hls4mlEmulator::Model> model,
                        const std::vector<double>& AssociationNetworkZ0ResBins,
                        bool debug
                        )
-    : associationThreshold_(AssociationThreshold),
+    : associationThreshold_((l1ct::nn_assoc_t)AssociationThreshold),
       z0_binning_(AssociationNetworkZ0binning),
       eta_bins_(AssociationNetworkEtaBounds),
       res_bins_(AssociationNetworkZ0ResBins),
       modelRef_(model),
       isDebugEnabled_(debug)  {
-  NNvectorVar_.clear();
-
+        
   fPt_ = 0;
   fMVA_ = 0;
   fResBin_ = 0;
@@ -35,93 +36,45 @@ NNVtxAssoc::NNVtxAssoc(const std::shared_ptr<hls4mlEmulator::Model> model,
   log_.precision(3);
 }
 
-void NNVtxAssoc::setNNVectorVar() {
-  NNvectorVar_.clear();
-  if (isDebugEnabled_) {
-    LogDebug("NNVtxAssoc") << "\n ===== Input Vector =====" << std::endl;
-  }
 
-  NNvectorVar_.push_back(fPt_);                              // pt
-  NNvectorVar_.push_back(fMVA_);                          //pT as a fraction of jet pT
-  NNvectorVar_.push_back(fResBin_);                          // pt log
-  NNvectorVar_.push_back(fDz_);                            //dEta from jet axis
-
-    if (isDebugEnabled_) {
-      LogDebug("NNVtxAssoc") 
-                                << "pT: " << NNvectorVar_[0 ]
-                                << " | "
-                                   "Track Quality MVA: "
-                                << NNvectorVar_[1]
-                                << " | "
-                                   "Resolution Bin: "
-                                << NNvectorVar_[2]
-                                << " | "
-                                   "dZ: "
-                                << NNvectorVar_[3]
-                                << " | "
-                                << "===========" << std::endl;
-    }
-}
-
-bool NNVtxAssoc::EvaluateNNFixed(float& score) {
-  const int NInputs = 4;
-  classtype classresult;
-
-  inputtype fillzero = 0.0;
-
-  inputtype modelInput[NInputs] = {};  // Do something
-  std::fill(modelInput, modelInput + NInputs, fillzero);
-  for (unsigned int i = 0; i < NNvectorVar_.size(); i++) {
-    modelInput[i] = NNvectorVar_[i];
-  }
-  modelRef_->prepare_input(modelInput);
-  modelRef_->predict();
-  modelRef_->read_result(&classresult);
-
-  float modelResult_;
-  if (isDebugEnabled_) {
-    LogDebug("NNVtxAssoc") << "\n ===== Vertex Association Output Score =====" << std::endl;
-  }
-    modelResult_ = classresult.to_float();
-    if (isDebugEnabled_) {
-      LogDebug("NNVtxAssoc") << "Score" << " : " << modelResult_
-                                << std::endl;
-    }
-  float NNOutput_exp = 1.0 / (1.0 + exp(-1.0 * (modelResult_)));
-  score = NNOutput_exp;
-  return NNOutput_exp >= associationThreshold_;
-}  //end EvaluateNNFixed
-
-template <typename T>
-bool NNVtxAssoc::TTTrackNetworkSelector(const PFRegionEmu& region, const T& t, const l1ct::PVObjEmu& v, float& score) {
+void NNVtxAssoc::TTTrackNetworkSelector(const l1ct::PFRegionEmu& region, const l1ct::TkObjEmu& t, const l1ct::PVObjEmu& v, l1ct::nn_assoc_t& score) {
+    nn_inputtype modelInput[N_NN_ASSOC_FEATURES] = {};  // Do something  
+    classtype classresult;
+  
     auto lower = std::lower_bound(eta_bins_.begin(), eta_bins_.end(), region.floatGlbEta(t.hwVtxEta()));
 
     int resbin = std::distance(eta_bins_.begin(), lower);
-    float binWidth = z0_binning_[2];
     // Calculate integer dZ from track z0 and vertex z0 (use floating point version and convert internally allowing use of both emulator and simulator vertex and track)
-    float dZ =
-        abs(floor(((t.floatZ0() + z0_binning_[1]) / (binWidth))) - floor(((v.floatZ0() + z0_binning_[1]) / (binWidth))));
+    
 
     // The following constants <22, 9> are defined by the quantisation of the Neural Network
-    fPt_ = t.hwPt;
-    fResBin_=  res_bins_[resbin] / 16;
-    fMVA_ = 0;
-    fDz_ = dZ;
+    fPt_ = (nn_inputtype) t.hwPt;
+    fResBin_=  (nn_inputtype) res_bins_[resbin] / 16;
+    fDz_ = t.hwZ0  - v.hwZ0 ;
+    fMVA_ = (nn_inputtype) t.hwQuality;
 
-    // Deal with this template class using 2 different objects (t) which have different calls to their PFTracks:
-    const l1t::PFTrack* srcTrack = NULL;
-    if constexpr (std::is_same_v<T, const l1ct::TkObjEmu>)
-      srcTrack = t.src;
-    else if constexpr (std::is_same_v<T, const l1ct::PFChargedObjEmu>)
-      srcTrack = t.srcTrack;
-    if (srcTrack)
-      fMVA_ = srcTrack->trackWord().getMVAQualityBits();
+    modelInput[0] = fPt_; // Obj pT
+    modelInput[1] = fMVA_; // Obj track quality
+    modelInput[2] = fResBin_ / 16; // Obj z0 resolution bin (rescaled)
+    modelInput[3] = fDz_; // Obj delta z from the PV
 
-    setNNVectorVar();
-    return EvaluateNNFixed(score);
+    modelRef_->prepare_input(modelInput);
+    modelRef_->predict();
+    modelRef_->read_result(&classresult);
+
+    score = (l1ct::nn_assoc_t)classresult;
+
+    if (isDebugEnabled_) {
+      LogDebug("NNVtxAssoc") << "\n ===== Vertex Association Output Score =====" << std::endl;
+    }
+    float NNOutput_exp = 1.0 / (1.0 + exp(-1.0 * (classresult.to_float())));
+    if (isDebugEnabled_) {
+        LogDebug("NNVtxAssoc") << "Score: " << classresult.to_float()
+                               << "exponentiated score " << NNOutput_exp
+                                  << std::endl;
+      }
 }
 
-#ifdef CMSSW_GIT_HASH
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/ParameterSet/interface/ParameterSetDescription.h"
 
@@ -134,7 +87,6 @@ edm::ParameterSetDescription NNVtxAssoc::getParameterSetDescription() {
   description.add<std::vector<double>>("associationNetworkZ0ResBins");
   return description;
 }
-#endif
 
 void NNVtxAssoc::NNVtxAssocDebug() {
   log_ << "-- NNVtxAssocDebug --\n";
@@ -154,11 +106,35 @@ void NNVtxAssoc::NNVtxAssocDebug() {
   edm::LogPrint("NNVtxAssoc") << log_.str();
 }
 
-template bool NNVtxAssoc::TTTrackNetworkSelector<const l1ct::TkObjEmu>(const PFRegionEmu&,
-                                                                       const l1ct::TkObjEmu&,
-                                                                       const l1ct::PVObjEmu&,
-                                                                       float& score);
-template bool NNVtxAssoc::TTTrackNetworkSelector<const l1ct::PFChargedObjEmu>(const PFRegionEmu&,
-                                                                              const l1ct::PFChargedObjEmu&,
-                                                                              const l1ct::PVObjEmu&,
-                                                                              float& score);
+
+#else   
+
+#include "L1TNNVtx_Assoc_Model/L1TNNVtx_Assoc_Model_v0/NN/L1TNNVtx_Assoc_Model_v0.h"
+
+void EmuNetworkSelector(const l1ct::TkObj& t, const l1ct::PVObjEmu& v, l1ct::nn_assoc_t& output_score) {
+
+    int resbin = 0;
+    for (int ibin = 0; ibin <= 126; ++ibin) {
+      if (t.hwEta > associationNetworkEtaBounds[ibin] & t.hwEta <= associationNetworkEtaBounds[ibin + 1]){
+          resbin = ibin;
+          break;
+      }
+    };
+    // The following constants <22, 9> are defined by the quantisation of the Neural Network
+    nn_inputtype fPt_ = t.hwPt;
+    nn_inputtype fResBin_ = associationNetworkZ0ResBins[resbin];
+    nn_inputtype fMVA_ = t.hwQuality;
+    nn_inputtype fDz_ = t.hwZ0  - v.hwZ0 ;
+
+    nn_inputtype association_input[N_NN_ASSOC_FEATURES];
+    L1TNNVtx_Assoc_Model_v0::result_t nn_output_score[N_NN_ASSOC_OUTPUTS];
+
+    association_input[0] = fPt_; // Obj pT
+    association_input[1] = fMVA_; // Obj track quality
+    association_input[2] = fResBin_ / 16; // Obj z0 resolution bin (rescaled)
+    association_input[3] = fDz_; // Obj delta z from the PV
+
+    L1TNNVtx_Assoc_Model_v0::L1TNNVtx_Assoc_Model_v0(association_input, nn_output_score);
+    output_score = (l1ct::nn_assoc_t)nn_output_score[0];
+}
+#endif 
