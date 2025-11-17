@@ -128,7 +128,7 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(const edm::ParameterSet &iConfig)
       useMLAssociation_(iConfig.getParameter<bool>("useMLAssociation")),
       loader(hls4mlEmulator::ModelLoader(iConfig.getParameter<edm::ParameterSet>("NNVtxAssociation").getParameter<std::string>("associationNetworkPath"))),
       nFinalSort_(iConfig.getParameter<uint32_t>("nFinalSort")),
-      debug_(iConfig.getUntrackedParameter<bool>("debug", false)),
+      debug_(iConfig.getUntrackedParameter<bool>("debug", true)),
       fakePuppi_(iConfig.getParameter<bool>("fakePuppi")) {
   if (absEtaBins_.size() + 1 != ptSlopeNe_.size())
     throw cms::Exception("Configuration", "size mismatch for ptSlopes parameter");
@@ -284,22 +284,27 @@ void l1ct::LinPuppiEmulator::linpuppi_chs_ref(const PFRegionEmu &region,
         outallch[i].setHwTkQuality(region.isFiducial(pfch[i]) ? 1 : 0);
       }
       if (debug_ && pfch[i].hwPt > 0)
-        dbgPrintf("ref candidate %02u pt %7.2f pid %1d   vz %+6d  dz %+6d (cut %5d), fid %1d -> pass, packed %s\n",
+        dbgPrintf("ref candidate %02u pt %7.2f pid %1d, z0 %7d, fid %1d, assoc Score %7d, assoc %7d -> pass, packed %s\n",
                   i,
                   pfch[i].floatPt(),
                   pfch[i].intId(),
                   int(pfch[i].hwZ0),
                   region.isFiducial(pfch[i]),
+                  pfch[i].hwAssociationScore,
+                  pfch[i].hwAssociation,
                   outallch[i].pack().to_string(16).c_str());
     } else {
       outallch[i].clear();
       if (debug_ && pfch[i].hwPt > 0)
-        dbgPrintf("ref candidate %02u pt %7.2f pid %1d   vz %+6d  dz %+6d (cut %5d), fid %1d -> fail\n",
+        dbgPrintf("ref candidate %02u pt %7.2f pid %1d , z0 %7d, fid %1d, assoc Score %7d, assoc %7d -> fail\n",
                   i,
                   pfch[i].floatPt(),
                   pfch[i].intId(),
                   int(pfch[i].hwZ0),
-                  region.isFiducial(pfch[i]));
+                  region.isFiducial(pfch[i])
+                  pfch[i].hwAssociationScore,
+                  pfch[i].hwAssociation,
+                  );
     }
   }
 }
