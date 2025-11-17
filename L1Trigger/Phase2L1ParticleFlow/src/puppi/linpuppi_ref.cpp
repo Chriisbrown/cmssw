@@ -301,9 +301,9 @@ void l1ct::LinPuppiEmulator::linpuppi_chs_ref(const PFRegionEmu &region,
                   pfch[i].floatPt(),
                   pfch[i].intId(),
                   int(pfch[i].hwZ0),
-                  region.isFiducial(pfch[i])
+                  region.isFiducial(pfch[i]),
                   pfch[i].hwAssociationScore,
-                  pfch[i].hwAssociation,
+                  pfch[i].hwAssociation
                   );
     }
   }
