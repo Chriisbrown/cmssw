@@ -41,23 +41,25 @@ void NNVtxAssoc::TTTrackNetworkSelector(const l1ct::PFRegionEmu& region, const l
     nn_inputtype modelInput[N_NN_ASSOC_FEATURES] = {};  // Do something  
     classtype classresult;
   
-    auto lower = std::lower_bound(eta_bins_.begin(), eta_bins_.end(), region.floatGlbEta(t.hwVtxEta()));
-
-    int resbin = std::distance(eta_bins_.begin(), lower);
-    // Calculate integer dZ from track z0 and vertex z0 (use floating point version and convert internally allowing use of both emulator and simulator vertex and track)
+    int resbin = 0;
+    for (int ibin = 0; ibin <= 126; ++ibin) {
+      if (t.hwEta > associationNetworkEtaBounds[ibin] & t.hwEta <= associationNetworkEtaBounds[ibin + 1]){
+        resbin = ibin;
+      }
+    };
     
 
     // The following constants <22, 9> are defined by the quantisation of the Neural Network
-    fPt_ = (nn_inputtype) t.hwPt;
-    fResBin_=  (nn_inputtype) res_bins_[resbin] / 16;
+    fPt_ = t.hwPt; 
+    fResBin_ = associationNetworkZ0ResBins[resbin];
+    fMVA_ = t.hwQuality;
     fDz_ = t.hwZ0  - v.hwZ0 ;
-    fMVA_ = (nn_inputtype) t.hwQuality;
 
     modelInput[0] = fPt_; // Obj pT
     modelInput[1] = fMVA_; // Obj track quality
     modelInput[2] = fResBin_ / 16; // Obj z0 resolution bin (rescaled)
     modelInput[3] = fDz_; // Obj delta z from the PV
-
+    
     modelRef_->prepare_input(modelInput);
     modelRef_->predict();
     modelRef_->read_result(&classresult);
@@ -114,8 +116,10 @@ void NNVtxAssoc::NNVtxAssocDebug() {
 void EmuNetworkSelector(const l1ct::TkObj& t, const l1ct::PVObjEmu& v, l1ct::nn_assoc_t& output_score) {
 
     int resbin = 0;
+    l1ct::eta_t temp_hwEta;
+    if (t.hwEta < 0) {temp_hwEta = -1*t.hwEta; }
     for (int ibin = 0; ibin <= 126; ++ibin) {
-      if (t.hwEta > associationNetworkEtaBounds[ibin] & t.hwEta <= associationNetworkEtaBounds[ibin + 1]){
+      if (temp_hwEta > l1ct::Scales::makeEta(associationNetworkEtaBounds[ibin]) & temp_hwEta <= l1ct::Scales::makeEta(associationNetworkEtaBounds[ibin + 1])){
           resbin = ibin;
           break;
       }
@@ -134,7 +138,8 @@ void EmuNetworkSelector(const l1ct::TkObj& t, const l1ct::PVObjEmu& v, l1ct::nn_
     association_input[2] = fResBin_ / 16; // Obj z0 resolution bin (rescaled)
     association_input[3] = fDz_; // Obj delta z from the PV
 
-    L1TNNVtx_Assoc_Model_v0::L1TNNVtx_Assoc_Model_v0(association_input, nn_output_score);
+    L1TNNVtx_Assoc_Model_v0::NNvtx_assoc(association_input, nn_output_score);
+
     output_score = (l1ct::nn_assoc_t)nn_output_score[0];
 }
 #endif 

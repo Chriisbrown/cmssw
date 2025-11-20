@@ -49,7 +49,7 @@ namespace l1ct {
     tkdphi_t hwDPhi;  // relative to the region center, at calo
     tkquality_t hwTkQuality;
     nn_assoc_t hwAssociationScore;
-    bool hwAssociation;
+    ap_uint<1> hwAssociation;
 
     phi_t hwVtxPhi() const { return hwId.chargeOrNull() ? hwPhi + hwDPhi : hwPhi - hwDPhi; }
     eta_t hwVtxEta() const { return hwEta + hwDEta; }
@@ -104,7 +104,7 @@ namespace l1ct {
       pack_into_bits(ret, start, hwDxy);
       pack_into_bits(ret, start, hwTkQuality);
       pack_into_bits(ret, start, hwAssociationScore);
-      pack_bool_into_bits(ret, start, hwAssociation);
+      pack_into_bits(ret, start, hwAssociation);
       return ret;
     }
     inline static PFChargedObj unpack(const ap_uint<BITWIDTH> &src) {
@@ -117,7 +117,7 @@ namespace l1ct {
       unpack_from_bits(src, start, ret.hwDxy);
       unpack_from_bits(src, start, ret.hwTkQuality);
       unpack_from_bits(src, start, ret.hwAssociationScore);
-      unpack_bool_from_bits(src, start, ret.hwAssociation);
+      unpack_from_bits(src, start, ret.hwAssociation);
       return ret;
     }
   };

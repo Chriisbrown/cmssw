@@ -52,9 +52,6 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
                                          pt_t ptCut_1,
                                          bool useMLAssociation,
                                          const double associationThreshold,
-                                         std::vector<double> associationNetworkZ0binning,
-                                         std::vector<double> associationNetworkEtaBounds,
-                                         std::vector<double> associationNetworkZ0ResBins,
                                          unsigned int nFinalSort,
                                          SortAlgo finalSortAlgo)
     : nTrack_(nTrack),
@@ -77,6 +74,7 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(unsigned int nTrack,
       priorPh_(2),
       ptCut_(2),
       useMLAssociation_(useMLAssociation),
+      associationThreshold_(associationThreshold),
       nFinalSort_(nFinalSort ? nFinalSort : nOut),
       finalSortAlgo_(finalSortAlgo),
       debug_(false),
@@ -276,7 +274,7 @@ void l1ct::LinPuppiEmulator::linpuppi_chs_ref(const PFRegionEmu &region,
   for (unsigned int i = 0; i < nTrack; ++i) {
     bool accept = pfch[i].hwPt != 0;
     if (!fakePuppi_)
-      accept = accept && region.isFiducial(pfch[i]) && (pfch[i].hwAssociation || pfch[i].hwId.isMuon());
+      accept = accept && region.isFiducial(pfch[i]) && (pfch[i].hwAssociation == 1 || pfch[i].hwId.isMuon());
     if (accept) {
       outallch[i].fill(region, pfch[i]);
       if (fakePuppi_) {                           // overwrite Dxy & TkQuality with debug information
@@ -284,25 +282,27 @@ void l1ct::LinPuppiEmulator::linpuppi_chs_ref(const PFRegionEmu &region,
         outallch[i].setHwTkQuality(region.isFiducial(pfch[i]) ? 1 : 0);
       }
       if (debug_ && pfch[i].hwPt > 0)
-        dbgPrintf("ref candidate %02u pt %7.2f pid %1d, z0 %7d, fid %1d, assoc Score %7d, assoc %7d -> pass, packed %s\n",
+        dbgPrintf("ref candidate %02u pt %7.2f pid %1d, z0 %7d, fid %1d, hwassS %7d, flthwassS %16.6f, hwass %1d -> pass, packed %s\n",
                   i,
                   pfch[i].floatPt(),
                   pfch[i].intId(),
                   int(pfch[i].hwZ0),
                   region.isFiducial(pfch[i]),
-                  pfch[i].hwAssociationScore,
+                  (int)pfch[i].hwAssociationScore,
+                  pfch[i].hwAssociationScore.to_float(),
                   pfch[i].hwAssociation,
                   outallch[i].pack().to_string(16).c_str());
     } else {
       outallch[i].clear();
       if (debug_ && pfch[i].hwPt > 0)
-        dbgPrintf("ref candidate %02u pt %7.2f pid %1d , z0 %7d, fid %1d, assoc Score %7d, assoc %7d -> fail\n",
+        dbgPrintf("ref candidate %02u pt %7.2f pid %1d , z0 %7d, fid %1d, hwassS %7d, flthwassS %16.6f, hwass %1d -> fail\n",
                   i,
                   pfch[i].floatPt(),
                   pfch[i].intId(),
                   int(pfch[i].hwZ0),
                   region.isFiducial(pfch[i]),
-                  pfch[i].hwAssociationScore,
+                  (int)pfch[i].hwAssociationScore,
+                  pfch[i].hwAssociationScore.to_float(),
                   pfch[i].hwAssociation
                   );
     }
@@ -451,7 +451,7 @@ void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,co
   const unsigned int nTrack = trk.size();
   const unsigned int nVtx_ = pv.size();
   nn_assoc_t nnvtx_score = 0;
-  nn_assoc_t associationThreshold = 0;
+  nn_assoc_t associationThreshold = associationThreshold_;
   for (unsigned int it = 0; it < nTrack; ++it) {
       TkObjEmu outtrk = trk[it];
       for (unsigned int v = 0; v < nVtx_; ++v) {
@@ -461,6 +461,7 @@ void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,co
           associationThreshold = nnVtxAssoc_->getAssociationThreshold();
         #else
           EmuNetworkSelector(trk[it], pv[v], nnvtx_score);
+
         #endif
         }
         else {
@@ -473,8 +474,6 @@ void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,co
         outtrack[it].hwAssociation = 1 ? (nnvtx_score > associationThreshold) : 0;
       }
   }  
-
-  
 }
 
 void l1ct::LinPuppiEmulator::linpuppi_ref(const PFRegionEmu &region,
@@ -499,7 +498,7 @@ void l1ct::LinPuppiEmulator::linpuppi_ref(const PFRegionEmu &region,
     for (unsigned int it = 0; it < nTrack; ++it) {
       if (track[it].hwPt == 0)
         continue;
-      if (!track[it].hwAssociation)
+      if (track[it].hwAssociation != 1)
         continue;
       unsigned int dr2 = dr2_int(pfallne[in].hwEta, pfallne[in].hwPhi, track[it].hwEta, track[it].hwPhi);
       if (dr2 <= dR2Max_) {                                             // if dr is inside puppi cone
@@ -641,7 +640,7 @@ void l1ct::LinPuppiEmulator::linpuppi_flt(const PFRegionEmu &region,
     for (unsigned int it = 0; it < nTrack; ++it) {
       if (track[it].hwPt == 0)
         continue;
-      if (!track[it].hwAssociation)
+      if (track[it].hwAssociation != 1)
         continue;
       unsigned int dr2 = dr2_int(
           pfallne[in].hwEta, pfallne[in].hwPhi, track[it].hwEta, track[it].hwPhi);  // if dr is inside puppi cone

@@ -14,11 +14,6 @@ namespace edm {
 }  // namespace edm
 
 namespace l1ct {
-#ifdef CMSSW_GIT_HASH
-  const bool withinCMSSW_ = true;
-#else
-  const bool withinCMSSW_ = false;
-#endif
 
   class LinPuppiEmulator {
   public:
@@ -44,9 +39,6 @@ namespace l1ct {
                      pt_t ptCut,
                      bool useMLAssociation = false,
                      const double associationThreshold = 0.0,
-                     std::vector<double> associationNetworkZ0binning = {},
-                     std::vector<double> associationNetworkEtaBounds = {},
-                     std::vector<double> associationNetworkZ0ResBins = {},
                      unsigned int nFinalSort = 0,
                      SortAlgo finalSortAlgo = SortAlgo::Insertion)
         : nTrack_(nTrack),
@@ -69,6 +61,7 @@ namespace l1ct {
           priorPh_(1, priorPh),
           ptCut_(1, ptCut),
           useMLAssociation_(useMLAssociation),
+          associationThreshold_(associationThreshold),
           nFinalSort_(nFinalSort ? nFinalSort : nOut),
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
@@ -105,9 +98,6 @@ namespace l1ct {
                      pt_t ptCut_1,
                      bool useMLAssociation = false,
                      const double associationThreshold = 0.0,
-                     std::vector<double> associationNetworkZ0binning = {},
-                     std::vector<double> associationNetworkEtaBounds = {},
-                     std::vector<double> associationNetworkZ0ResBins = {},
                      unsigned int nFinalSort = 0,
                      SortAlgo finalSortAlgo = SortAlgo::Insertion);
 
@@ -132,9 +122,6 @@ namespace l1ct {
                      const std::vector<pt_t> &ptCut,
                      bool useMLAssociation,
                      const double associationThreshold,
-                     std::vector<double> associationNetworkZ0binning,
-                     std::vector<double> associationNetworkEtaBounds,
-                     std::vector<double> associationNetworkZ0ResBins,
                      unsigned int nFinalSort,
                      SortAlgo finalSortAlgo)
         : nTrack_(nTrack),
@@ -157,6 +144,7 @@ namespace l1ct {
           priorPh_(priorPh),
           ptCut_(ptCut),
           useMLAssociation_(useMLAssociation),
+          associationThreshold_(associationThreshold),
           nFinalSort_(nFinalSort),
           finalSortAlgo_(finalSortAlgo),
           debug_(false),
