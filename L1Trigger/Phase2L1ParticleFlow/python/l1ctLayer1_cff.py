@@ -484,7 +484,7 @@ l1tLayer1HF = cms.EDProducer("L1TCorrelatorLayer1Producer",
         alphaCrop         = cms.vdouble(   4   ),
         priors             = cms.vdouble(  6.0  ),
         priorsPhoton      = cms.vdouble(  6.0  ),
-        debug = cms.untracked.bool(True),
+        debug = cms.untracked.bool(False),
         useMLAssociation = switchOnNNAssoc, #Enable Association Network
         NNVtxAssociation = NNVtxAssociationPSet,
     ),
