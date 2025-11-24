@@ -484,7 +484,7 @@ namespace l1ct {
     stub_t hwStubs;
 
     nn_assoc_t hwAssociationScore;
-    bool hwAssociation;
+    ap_uint<1> hwAssociation;
 
     enum TkQuality { PFLOOSE = 1, PFTIGHT = 2 };
     bool isPFLoose() const { return hwQuality[0]; }
@@ -496,7 +496,8 @@ namespace l1ct {
       return hwPt == other.hwPt && hwEta == other.hwEta && hwPhi == other.hwPhi && hwDEta == other.hwDEta &&
              hwDPhi == other.hwDPhi && hwZ0 == other.hwZ0 && hwDxy == other.hwDxy && hwCharge == other.hwCharge &&
              hwQuality == other.hwQuality && hwStubs == other.hwStubs && hwRedChi2RZ == other.hwRedChi2RZ &&
-             hwRedChi2RPhi == other.hwRedChi2RPhi && hwRedChi2Bend == other.hwRedChi2Bend;
+             hwRedChi2RPhi == other.hwRedChi2RPhi && hwRedChi2Bend == other.hwRedChi2Bend && hwAssociationScore == other.hwAssociationScore &&    
+             hwAssociation == other.hwAssociation;
     }
 
     inline bool operator>(const TkObj &other) const { return hwPt > other.hwPt; }
@@ -517,7 +518,7 @@ namespace l1ct {
       hwRedChi2Bend = 0;
       hwStubs = 0;
       hwAssociationScore = 0 ;
-      hwAssociation = false;
+      hwAssociation = 0;
     }
 
     int intPt() const { return Scales::intPt(hwPt); }
@@ -536,7 +537,7 @@ namespace l1ct {
     float floatZ0() const { return Scales::floatZ0(hwZ0); }
     float floatDxy() const { return Scales::floatDxy(hwDxy); }
     nn_assoc_t gethwAssociationScore() const { return hwAssociationScore; }
-    bool gethwAssociation() const { return hwAssociation; }
+    int gethwAssociation() const { return hwAssociation.to_int(); }
 
 
     static const int BITWIDTH_SLIM = pt_t::width + eta_t::width + phi_t::width + tkdeta_t::width + tkdphi_t::width + 1 +
@@ -547,7 +548,7 @@ namespace l1ct {
         BITWIDTH_SLIM + redChi2Bin_t::width + redChi2Bin_t::width + redChi2Bin_t::width + stub_t::width;
 
     static const int BITWIDTH =
-        BITWIDTH_SLIM + redChi2Bin_t::width + redChi2Bin_t::width + redChi2Bin_t::width + stub_t::width;
+        BITWIDTH_SLIM + redChi2Bin_t::width + redChi2Bin_t::width + redChi2Bin_t::width + stub_t::width + nn_assoc_t::width + 1;
 
 #ifndef __SYNTHESIS__
 
@@ -567,6 +568,8 @@ namespace l1ct {
       pack_into_bits(ret, start, hwRedChi2RZ);
       pack_into_bits(ret, start, hwRedChi2Bend);
       pack_into_bits(ret, start, hwStubs);
+      pack_into_bits(ret, start, hwAssociationScore);
+      pack_into_bits(ret, start, hwAssociation);
 
       return ret;
     }
@@ -589,6 +592,8 @@ namespace l1ct {
       unpack_from_bits(src, start, ret.hwRedChi2RZ);
       unpack_from_bits(src, start, ret.hwRedChi2Bend);
       unpack_from_bits(src, start, ret.hwStubs);
+      unpack_from_bits(src, start, ret.AssociationScore);
+      unpack_from_bits(src, start, ret.Association);
       return ret;
     }
 
