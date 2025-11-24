@@ -43,7 +43,7 @@ void NNVtxAssoc::TTTrackNetworkSelector(const l1ct::PFRegionEmu& region, const l
   
     int resbin = 0;
     for (int ibin = 0; ibin <= 126; ++ibin) {
-      if (t.hwEta > associationNetworkEtaBounds[ibin] & t.hwEta <= associationNetworkEtaBounds[ibin + 1]){
+      if ((t.hwEta > associationNetworkEtaBounds[ibin]) & (t.hwEta <= associationNetworkEtaBounds[ibin + 1])){
         resbin = ibin;
       }
     };

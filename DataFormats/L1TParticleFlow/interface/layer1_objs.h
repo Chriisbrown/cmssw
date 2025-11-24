@@ -592,8 +592,8 @@ namespace l1ct {
       unpack_from_bits(src, start, ret.hwRedChi2RZ);
       unpack_from_bits(src, start, ret.hwRedChi2Bend);
       unpack_from_bits(src, start, ret.hwStubs);
-      unpack_from_bits(src, start, ret.AssociationScore);
-      unpack_from_bits(src, start, ret.Association);
+      unpack_from_bits(src, start, ret.hwAssociationScore);
+      unpack_from_bits(src, start, ret.hwAssociation);
       return ret;
     }
 
