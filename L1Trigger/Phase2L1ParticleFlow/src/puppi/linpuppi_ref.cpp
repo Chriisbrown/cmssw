@@ -126,7 +126,7 @@ l1ct::LinPuppiEmulator::LinPuppiEmulator(const edm::ParameterSet &iConfig)
       useMLAssociation_(iConfig.getParameter<bool>("useMLAssociation")),
       loader(hls4mlEmulator::ModelLoader(iConfig.getParameter<edm::ParameterSet>("NNVtxAssociation").getParameter<std::string>("associationNetworkPath"))),
       nFinalSort_(iConfig.getParameter<uint32_t>("nFinalSort")),
-      debug_(iConfig.getUntrackedParameter<bool>("debug", true)),
+      debug_(iConfig.getUntrackedParameter<bool>("debug", false)),
       fakePuppi_(iConfig.getParameter<bool>("fakePuppi")) {
   if (absEtaBins_.size() + 1 != ptSlopeNe_.size())
     throw cms::Exception("Configuration", "size mismatch for ptSlopes parameter");
@@ -282,28 +282,22 @@ void l1ct::LinPuppiEmulator::linpuppi_chs_ref(const PFRegionEmu &region,
         outallch[i].setHwTkQuality(region.isFiducial(pfch[i]) ? 1 : 0);
       }
       if (debug_ && pfch[i].hwPt > 0)
-        dbgPrintf("ref candidate %02u pt %7.2f pid %1d, z0 %7d, fid %1d, hwassS %7d, flthwassS %16.6f, hwass %1d -> pass, packed %s\n",
+        dbgPrintf("ref candidate %02u pt %7.2f pid %1d, z0 %7d, fid %1d -> pass, packed %s\n",
                   i,
                   pfch[i].floatPt(),
                   pfch[i].intId(),
                   int(pfch[i].hwZ0),
                   region.isFiducial(pfch[i]),
-                  (int)pfch[i].hwAssociationScore,
-                  pfch[i].hwAssociationScore.to_float(),
-                  pfch[i].hwAssociation,
                   outallch[i].pack().to_string(16).c_str());
     } else {
       outallch[i].clear();
       if (debug_ && pfch[i].hwPt > 0)
-        dbgPrintf("ref candidate %02u pt %7.2f pid %1d , z0 %7d, fid %1d, hwassS %7d, flthwassS %16.6f, hwass %1d -> fail\n",
+        dbgPrintf("ref candidate %02u pt %7.2f pid %1d , z0 %7d, fid %1d -> fail\n",
                   i,
                   pfch[i].floatPt(),
                   pfch[i].intId(),
                   int(pfch[i].hwZ0),
-                  region.isFiducial(pfch[i]),
-                  (int)pfch[i].hwAssociationScore,
-                  pfch[i].hwAssociationScore.to_float(),
-                  pfch[i].hwAssociation
+                  region.isFiducial(pfch[i])
                   );
     }
   }
@@ -448,7 +442,7 @@ void l1ct::LinPuppiEmulator::fwdlinpuppi_ref(const PFRegionEmu &region,
 }
 
 void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,const std::vector<TkObjEmu> &trk, const std::vector<PVObjEmu> &pv, std::vector<PFChargedObjEmu> &pfobj, std::vector<TkObjEmu> &outtrack) const {
-  const unsigned int nTrack = trk.size();
+  const unsigned int nTrack = std::min<unsigned int>(nTrack_, pfobj.size());
   const unsigned int nVtx_ = pv.size();
   nn_assoc_t nnvtx_score = 0;
   nn_assoc_t associationThreshold = associationThreshold_;
@@ -461,17 +455,16 @@ void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,co
           associationThreshold = nnVtxAssoc_->getAssociationThreshold();
         #else
           EmuNetworkSelector(trk[it], pv[v], nnvtx_score);
-
         #endif
         }
         else {
-          nnvtx_score = std::abs(int(trk[it].hwZ0) - int(pv[v].hwZ0)) <= int(dzCut_);
+          nnvtx_score = (std::abs(int(trk[it].hwZ0) - int(pv[v].hwZ0)) <= int(dzCut_)) ? nn_assoc_t(1.0) : nn_assoc_t(0.0);
         }
         pfobj[it].hwAssociationScore = nnvtx_score;
-        pfobj[it].hwAssociation = 1 ? (nnvtx_score > associationThreshold) : 0;
+        pfobj[it].hwAssociation = (nnvtx_score > associationThreshold) ? 1 : 0;
 
         outtrack[it].hwAssociationScore = nnvtx_score;
-        outtrack[it].hwAssociation = 1 ? (nnvtx_score > associationThreshold) : 0;
+        outtrack[it].hwAssociation = (nnvtx_score > associationThreshold) ? 1 : 0;
       }
   }  
 }
