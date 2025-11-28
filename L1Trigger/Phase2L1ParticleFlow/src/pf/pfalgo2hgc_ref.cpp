@@ -246,7 +246,6 @@ void l1ct::PFAlgo2HGCEmulator::run(const PFInputRegion& in, OutputRegion& out) c
       }
       if (iMu[it] != -1)
         out.pfcharged[it].srcMu = in.muon[iMu[it]].src;
-      // out.pfcharged[it].nnVtxScore = in.track[it];
     }
   }
 

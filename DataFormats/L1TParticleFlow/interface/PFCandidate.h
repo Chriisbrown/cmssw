@@ -68,8 +68,10 @@ namespace l1t {
     void setIdProbEm(float prob) { idProbEm_ = prob; }
     float idProbPi() const { return idProbPi_; }
     void setIdProbPi(float prob) { idProbPi_ = prob; }
-    float nnVtxScore() const { return nnVtxScore_; }
-    void setNnVtxScore(float score) { nnVtxScore_ = score; }
+    float hwAssociationScore() const { return hwAssociationScore_; }
+    void setHwAssociationScore(float score) { hwAssociationScore_ = score; }
+    int hwAssociation() const { return hwAssociation_; }
+    void setHwAssociation(int hwAssociation) { hwAssociation_ = hwAssociation; }
     float alpha() const { return alpha_; }
     void setAlpha(float alpha) { alpha_ = alpha; }
 
@@ -93,7 +95,8 @@ namespace l1t {
     float idProbPu_;
     float idProbEm_;
     float idProbPi_;
-    float nnVtxScore_;
+    float hwAssociationScore_ = 0;
+    int hwAssociation_ = 0;
     float alpha_;
 
     void setPdgIdFromParticleType(int charge, ParticleType kind);

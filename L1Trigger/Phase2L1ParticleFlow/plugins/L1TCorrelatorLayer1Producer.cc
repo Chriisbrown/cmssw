@@ -1330,6 +1330,8 @@ std::unique_ptr<l1t::PFCandidateCollection> L1TCorrelatorLayer1Producer::fetchPF
       ret->back().setIdProbPu(p.idProbPu);
       ret->back().setIdProbEm(p.idProbEm);
       ret->back().setIdProbPi(p.idProbPi);
+      ret->back().setHwAssociationScore(p.hwAssociationScore);
+      ret->back().setHwAssociation(p.hwAssociation);
 
       setRefs_(ret->back(), p);
     }
@@ -1386,13 +1388,15 @@ void L1TCorrelatorLayer1Producer::putPuppi(edm::Event &iEvent) const {
         coll->back().setHwZ0(p.hwZ0());
         coll->back().setHwDxy(p.hwDxy());
         coll->back().setHwTkQuality(p.hwTkQuality());
-        coll->back().setNnVtxScore(p.nnVtxScore);
+        coll->back().setHwAssociationScore(p.hwAssociationScore);
+        coll->back().setHwAssociation(p.hwAssociation);
         coll->back().setAlpha(-1);
       } else {
         coll->back().setHwPuppiWeight(p.hwPuppiW());
         coll->back().setHwEmID(p.hwEmID());
         coll->back().setAlpha(p.alpha);
-        coll->back().setNnVtxScore(-1);
+        coll->back().setHwAssociationScore(-99);
+        coll->back().setHwAssociation(0);
       }
       coll->back().setIdProbPu(-1);
       coll->back().setIdProbEm(-1);
