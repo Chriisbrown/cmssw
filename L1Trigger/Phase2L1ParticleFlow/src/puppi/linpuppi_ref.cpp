@@ -451,7 +451,7 @@ void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,
   nn_assoc_t nnvtx_score = 0;
   nn_assoc_t associationThreshold = associationThreshold_;
   for (unsigned int it = 0; it < nTrack; ++it) {
-       for (unsigned int v = 0; v < nVtx_; ++v) {
+    for (unsigned int v = 0; v < nVtx_; ++v) {
       if (useMLAssociation_) {
 #ifdef CMSSW_GIT_HASH
         nnVtxAssoc_->TTTrackNetworkSelector(region, trk[it], pv[v], nnvtx_score);
