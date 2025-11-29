@@ -57,8 +57,7 @@ namespace l1ct {
     inline bool operator==(const PFChargedObj &other) const {
       return hwPt == other.hwPt && hwEta == other.hwEta && hwPhi == other.hwPhi && hwId == other.hwId &&
              hwDEta == other.hwDEta && hwDPhi == other.hwDPhi && hwZ0 == other.hwZ0 && hwDxy == other.hwDxy &&
-             hwTkQuality == other.hwTkQuality &&
-             hwAssociationScore == other.hwAssociationScore &&
+             hwTkQuality == other.hwTkQuality && hwAssociationScore == other.hwAssociationScore &&
              hwAssociation == other.hwAssociation;
     }
 
@@ -77,7 +76,6 @@ namespace l1ct {
       hwTkQuality = 0;
       hwAssociationScore = 0;
       hwAssociation = 0;
-
     }
 
     int intVtxEta() const { return hwVtxEta().to_int(); }
@@ -92,8 +90,8 @@ namespace l1ct {
 
     void setAssociation(float association) { hwAssociationScore = (nn_assoc_t)(association); }
 
-    static const int BITWIDTH =
-        _PFCOMMON_BITWIDTH + tkdeta_t::width + tkdphi_t::width + z0_t::width + dxy_t::width + tkquality_t::width + nn_assoc_t::width + 1;
+    static const int BITWIDTH = _PFCOMMON_BITWIDTH + tkdeta_t::width + tkdphi_t::width + z0_t::width + dxy_t::width +
+                                tkquality_t::width + nn_assoc_t::width + 1;
     inline ap_uint<BITWIDTH> pack() const {
       ap_uint<BITWIDTH> ret;
       unsigned int start = 0;

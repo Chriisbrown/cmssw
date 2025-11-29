@@ -210,7 +210,7 @@ namespace l1ct {
                                 const std::vector<TkObjEmu> &trk /*[nTrack]*/,
                                 const std::vector<PVObjEmu> &pv /*[nVtx]*/,
                                 std::vector<PFChargedObjEmu> &outpfobj,
-                                std::vector<TkObjEmu> &outtrack ) const;
+                                std::vector<TkObjEmu> &outtrack) const;
 
     // for CMSSW
     void run(const PFInputRegion &in, const std::vector<l1ct::PVObjEmu> &pvs, OutputRegion &out) const;
@@ -229,15 +229,15 @@ namespace l1ct {
     std::vector<double> alphaSlope_, alphaZero_, alphaCrop_;
     std::vector<double> priorNe_, priorPh_;
     std::vector<pt_t> ptCut_;
-    
+
     bool useMLAssociation_;
     float associationThreshold_ = 0;
 
-    #ifdef CMSSW_GIT_HASH    // NNVtx Association:
-      std::unique_ptr<NNVtxAssoc> nnVtxAssoc_;
-      std::shared_ptr<hls4mlEmulator::Model> model;
-      hls4mlEmulator::ModelLoader loader;
-    #endif
+#ifdef CMSSW_GIT_HASH  // NNVtx Association:
+    std::unique_ptr<NNVtxAssoc> nnVtxAssoc_;
+    std::shared_ptr<hls4mlEmulator::Model> model;
+    hls4mlEmulator::ModelLoader loader;
+#endif
 
     unsigned int nFinalSort_;  // output after a full sort of charged + neutral
     SortAlgo finalSortAlgo_;
