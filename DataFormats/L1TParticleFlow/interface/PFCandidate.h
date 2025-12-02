@@ -70,8 +70,6 @@ namespace l1t {
     void setIdProbPi(float prob) { idProbPi_ = prob; }
     float hwAssociationScore() const { return hwAssociationScore_; }
     void setHwAssociationScore(float score) { hwAssociationScore_ = score; }
-    int hwAssociation() const { return hwAssociation_; }
-    void setHwAssociation(int hwAssociation) { hwAssociation_ = hwAssociation; }
     float alpha() const { return alpha_; }
     void setAlpha(float alpha) { alpha_ = alpha; }
 

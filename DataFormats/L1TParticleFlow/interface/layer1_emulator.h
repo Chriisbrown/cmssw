@@ -141,8 +141,8 @@ namespace l1ct {
     float idProbPu;
     float idProbEm;
     float idProbPi;
-    float hwAssociationScore;
-    int hwAssociation;
+    float AssociationScore;
+    int Association;
     float alpha;
     bool read(std::fstream &from);
     bool write(std::fstream &to) const;
@@ -155,8 +155,8 @@ namespace l1ct {
       idProbPu = 0;
       idProbEm = 0;
       idProbPi = 0;
-      hwAssociationScore = 0;
-      hwAssociation = 0;
+      AssociationScore = 0;
+      Association = 0;
       alpha = 0;
     }
     inline void fill(const PFRegionEmu &region, const PFChargedObjEmu &src) {
@@ -168,8 +168,6 @@ namespace l1ct {
       idProbPu = src.idProbPu;
       idProbEm = src.idProbEm;
       idProbPi = src.idProbPi;
-      hwAssociationScore = src.hwAssociationScore;
-      hwAssociation = src.hwAssociation;
     }
     inline void fill(const PFRegionEmu &region, const PFNeutralObjEmu &src, pt_t puppiPt, puppiWgt_t puppiWgt) {
       PuppiObj::fill(region, src, puppiPt, puppiWgt);

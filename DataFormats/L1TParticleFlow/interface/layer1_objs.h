@@ -483,9 +483,6 @@ namespace l1ct {
     redChi2Bin_t hwRedChi2Bend;  // 4 bits
     stub_t hwStubs;
 
-    nn_assoc_t hwAssociationScore;
-    ap_uint<1> hwAssociation;
-
     enum TkQuality { PFLOOSE = 1, PFTIGHT = 2 };
     bool isPFLoose() const { return hwQuality[0]; }
     bool isPFTight() const { return hwQuality[1]; }
@@ -496,8 +493,7 @@ namespace l1ct {
       return hwPt == other.hwPt && hwEta == other.hwEta && hwPhi == other.hwPhi && hwDEta == other.hwDEta &&
              hwDPhi == other.hwDPhi && hwZ0 == other.hwZ0 && hwDxy == other.hwDxy && hwCharge == other.hwCharge &&
              hwQuality == other.hwQuality && hwStubs == other.hwStubs && hwRedChi2RZ == other.hwRedChi2RZ &&
-             hwRedChi2RPhi == other.hwRedChi2RPhi && hwRedChi2Bend == other.hwRedChi2Bend &&
-             hwAssociationScore == other.hwAssociationScore && hwAssociation == other.hwAssociation;
+             hwRedChi2RPhi == other.hwRedChi2RPhi && hwRedChi2Bend == other.hwRedChi2Bend;
     }
 
     inline bool operator>(const TkObj &other) const { return hwPt > other.hwPt; }
@@ -517,8 +513,6 @@ namespace l1ct {
       hwRedChi2RZ = 0;
       hwRedChi2Bend = 0;
       hwStubs = 0;
-      hwAssociationScore = 0;
-      hwAssociation = 0;
     }
 
     int intPt() const { return Scales::intPt(hwPt); }
@@ -536,8 +530,7 @@ namespace l1ct {
     float floatVtxPhi() const { return Scales::floatPhi(hwVtxPhi()); }
     float floatZ0() const { return Scales::floatZ0(hwZ0); }
     float floatDxy() const { return Scales::floatDxy(hwDxy); }
-    nn_assoc_t gethwAssociationScore() const { return hwAssociationScore; }
-    int gethwAssociation() const { return hwAssociation.to_int(); }
+
 
     static const int BITWIDTH_SLIM = pt_t::width + eta_t::width + phi_t::width + tkdeta_t::width + tkdphi_t::width + 1 +
                                      z0_t::width + dxy_t::width + tkquality_t::width;
@@ -546,8 +539,8 @@ namespace l1ct {
     static const int BITWIDTH_ENDCAP =
         BITWIDTH_SLIM + redChi2Bin_t::width + redChi2Bin_t::width + redChi2Bin_t::width + stub_t::width;
 
-    static const int BITWIDTH = BITWIDTH_SLIM + redChi2Bin_t::width + redChi2Bin_t::width + redChi2Bin_t::width +
-                                stub_t::width + nn_assoc_t::width + 1;
+    static const int BITWIDTH =
+        BITWIDTH_SLIM + redChi2Bin_t::width + redChi2Bin_t::width + redChi2Bin_t::width + stub_t::width;
 
 #ifndef __SYNTHESIS__
 
@@ -567,8 +560,6 @@ namespace l1ct {
       pack_into_bits(ret, start, hwRedChi2RZ);
       pack_into_bits(ret, start, hwRedChi2Bend);
       pack_into_bits(ret, start, hwStubs);
-      pack_into_bits(ret, start, hwAssociationScore);
-      pack_into_bits(ret, start, hwAssociation);
 
       return ret;
     }
@@ -591,8 +582,6 @@ namespace l1ct {
       unpack_from_bits(src, start, ret.hwRedChi2RZ);
       unpack_from_bits(src, start, ret.hwRedChi2Bend);
       unpack_from_bits(src, start, ret.hwStubs);
-      unpack_from_bits(src, start, ret.hwAssociationScore);
-      unpack_from_bits(src, start, ret.hwAssociation);
       return ret;
     }
 
