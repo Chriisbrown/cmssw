@@ -71,7 +71,6 @@ namespace l1ct {
       hwZ0 = 0;
       hwDxy = 0;
       hwTkQuality = 0;
-
     }
 
     int intVtxEta() const { return hwVtxEta().to_int(); }

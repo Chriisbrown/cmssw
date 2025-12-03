@@ -531,7 +531,6 @@ namespace l1ct {
     float floatZ0() const { return Scales::floatZ0(hwZ0); }
     float floatDxy() const { return Scales::floatDxy(hwDxy); }
 
-
     static const int BITWIDTH_SLIM = pt_t::width + eta_t::width + phi_t::width + tkdeta_t::width + tkdphi_t::width + 1 +
                                      z0_t::width + dxy_t::width + tkquality_t::width;
 

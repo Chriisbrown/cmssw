@@ -158,12 +158,12 @@ namespace l1ct {
     void linpuppi_chs_ref(const PFRegionEmu &region,
                           const PVObjEmu &pv,
                           const std::vector<PFChargedObjEmu> &pfch /*[nTrack]*/,
-                          std::vector<AssociationObjEmu> &association/*[nTrack]*/,
+                          std::vector<AssociationObjEmu> &association /*[nTrack]*/,
                           std::vector<PuppiObjEmu> &outallch /*[nTrack]*/) const;
     //vtx vetor
     void linpuppi_chs_ref(const PFRegionEmu &region,
                           const std::vector<PVObjEmu> &pv /*[nVtx]*/,
-                          std::vector<AssociationObjEmu> &association/*[nTrack]*/,
+                          std::vector<AssociationObjEmu> &association /*[nTrack]*/,
                           const std::vector<PFChargedObjEmu> &pfch /*[nTrack]*/,
                           std::vector<PuppiObjEmu> &outallch /*[nTrack]*/) const;
 
@@ -171,7 +171,7 @@ namespace l1ct {
     void linpuppi_flt(const PFRegionEmu &region,
                       const std::vector<TkObjEmu> &track /*[nTrack]*/,
                       const std::vector<PVObjEmu> &pv /*[nVtx]*/,
-                      std::vector<AssociationObjEmu> &association/*[nTrack]*/,
+                      std::vector<AssociationObjEmu> &association /*[nTrack]*/,
                       const std::vector<PFNeutralObjEmu> &pfallne /*[nIn]*/,
                       std::vector<PuppiObjEmu> &outallne_nocut /*[nIn]*/,
                       std::vector<PuppiObjEmu> &outallne /*[nIn]*/,
@@ -179,7 +179,7 @@ namespace l1ct {
     void linpuppi_ref(const PFRegionEmu &region,
                       const std::vector<TkObjEmu> &track /*[nTrack]*/,
                       const std::vector<PVObjEmu> &pv /*[nVtx]*/,
-                      std::vector<AssociationObjEmu> &association/*[nTrack]*/,
+                      std::vector<AssociationObjEmu> &association /*[nTrack]*/,
                       const std::vector<PFNeutralObjEmu> &pfallne /*[nIn]*/,
                       std::vector<PuppiObjEmu> &outallne_nocut /*[nIn]*/,
                       std::vector<PuppiObjEmu> &outallne /*[nIn]*/,
@@ -187,12 +187,12 @@ namespace l1ct {
     void linpuppi_ref(const PFRegionEmu &region,
                       const std::vector<TkObjEmu> &track /*[nTrack]*/,
                       const std::vector<PVObjEmu> &pv /*[nVtx]*/,
-                      std::vector<AssociationObjEmu> &association/*[nTrack]*/,
+                      std::vector<AssociationObjEmu> &association /*[nTrack]*/,
                       const std::vector<PFNeutralObjEmu> &pfallne /*[nIn]*/,
                       std::vector<PuppiObjEmu> &outselne /*[nOut]*/
-                    ) const {
+    ) const {
       std::vector<PuppiObjEmu> outallne_nocut, outallne;
-      linpuppi_ref(region, track, pv,association, pfallne, outallne_nocut, outallne, outselne);
+      linpuppi_ref(region, track, pv, association, pfallne, outallne_nocut, outallne, outselne);
     }
 
     // neutrals, forward
@@ -215,7 +215,7 @@ namespace l1ct {
     void linpuppi_associate_trk(const PFRegionEmu &region,
                                 const std::vector<TkObjEmu> &trk /*[nTrack]*/,
                                 const std::vector<PVObjEmu> &pv /*[nVtx]*/,
-                                std::vector<AssociationObjEmu> &association ) const;
+                                std::vector<AssociationObjEmu> &association) const;
 
     // for CMSSW
     void run(const PFInputRegion &in, const std::vector<l1ct::PVObjEmu> &pvs, OutputRegion &out) const;
@@ -234,15 +234,15 @@ namespace l1ct {
     std::vector<double> alphaSlope_, alphaZero_, alphaCrop_;
     std::vector<double> priorNe_, priorPh_;
     std::vector<pt_t> ptCut_;
-    
+
     bool useMLAssociation_;
     float associationThreshold_ = 0;
 
-    #ifdef CMSSW_GIT_HASH    // NNVtx Association:
-      std::unique_ptr<NNVtxAssoc> nnVtxAssoc_;
-      std::shared_ptr<hls4mlEmulator::Model> model;
-      hls4mlEmulator::ModelLoader loader;
-    #endif
+#ifdef CMSSW_GIT_HASH  // NNVtx Association:
+    std::unique_ptr<NNVtxAssoc> nnVtxAssoc_;
+    std::shared_ptr<hls4mlEmulator::Model> model;
+    hls4mlEmulator::ModelLoader loader;
+#endif
 
     unsigned int nFinalSort_;  // output after a full sort of charged + neutral
     SortAlgo finalSortAlgo_;
