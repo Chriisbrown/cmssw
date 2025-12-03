@@ -192,8 +192,7 @@ namespace l1ct {
                       std::vector<PuppiObjEmu> &outselne /*[nOut]*/
                     ) const {
       std::vector<PuppiObjEmu> outallne_nocut, outallne;
-      std::vector<AssociationObjEmu> associations;
-      linpuppi_ref(region, track, pv,associations, pfallne, outallne_nocut, outallne, outselne);
+      linpuppi_ref(region, track, pv,association, pfallne, outallne_nocut, outallne, outselne);
     }
 
     // neutrals, forward

@@ -285,13 +285,13 @@ void l1ct::LinPuppiEmulator::linpuppi_chs_ref(const PFRegionEmu &region,
         outallch[i].setHwTkQuality(region.isFiducial(pfch[i]) ? 1 : 0);
       }
       if (debug_ && pfch[i].hwPt > 0)
-        dbgPrintf("ref candidate %02u pt %7.2f pid %1d, z0 %7d, associated %1d ,association score %10.6f, fid %1d -> pass, packed %s\n",
+        dbgPrintf("ref candidate %02u pt %7.2f pid %1d, z0 %7d, associated %1d, association score %10.6f, fid %1d -> pass, packed %s\n",
                   i,
                   pfch[i].floatPt(),
                   pfch[i].intId(),
                   int(pfch[i].hwZ0),
                   association[i].hwAssociation,
-                  association[i].hwAssociationScore,
+                  association[i].hwAssociationScore.to_float(),
                   region.isFiducial(pfch[i]),
                   outallch[i].pack().to_string(16).c_str());
     } else {
@@ -303,7 +303,7 @@ void l1ct::LinPuppiEmulator::linpuppi_chs_ref(const PFRegionEmu &region,
                   pfch[i].intId(),
                   int(pfch[i].hwZ0),
                   association[i].hwAssociation,
-                  association[i].hwAssociationScore,
+                  association[i].hwAssociationScore.to_float(),
                   region.isFiducial(pfch[i])
                   );
     }
@@ -449,11 +449,13 @@ void l1ct::LinPuppiEmulator::fwdlinpuppi_ref(const PFRegionEmu &region,
 }
 
 void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,const std::vector<TkObjEmu> &trk, const std::vector<PVObjEmu> &pv, std::vector<AssociationObjEmu> &Associations) const {
+  const unsigned int nTrack = trk.size();
   const unsigned int nVtx_ = pv.size();
+  Associations.clear();
   nn_assoc_t nnvtx_score = 0;
   nn_assoc_t associationThreshold = associationThreshold_;
-  for (unsigned int it = 0; it < nTrack_; ++it) {
-      TkObjEmu outtrk = trk[it];
+  AssociationObjEmu association;
+  for (unsigned int it = 0; it < nTrack; ++it) {
       for (unsigned int v = 0; v < nVtx_; ++v) {
         if (useMLAssociation_){
         #ifdef CMSSW_GIT_HASH
@@ -466,7 +468,7 @@ void l1ct::LinPuppiEmulator::linpuppi_associate_trk(const PFRegionEmu &region,co
         else {
           nnvtx_score = (std::abs(int(trk[it].hwZ0) - int(pv[v].hwZ0)) <= int(dzCut_)) ? nn_assoc_t(1.0) : nn_assoc_t(0.0);
         }
-        AssociationObjEmu association;
+
         association.hwAssociationScore  = nnvtx_score;
         association.hwAssociation  = (nnvtx_score > associationThreshold) ? 1 : 0;
         Associations.push_back(association);
