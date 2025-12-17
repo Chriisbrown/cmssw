@@ -1332,6 +1332,11 @@ std::unique_ptr<l1t::PFCandidateCollection> L1TCorrelatorLayer1Producer::fetchPF
       ret->back().setIdProbPi(p.idProbPi);
       ret->back().setHwAssociationScore(-1);
 
+      // encode the PF candidate with the 64b encoding used for PUPPI
+      l1ct::PuppiObj encodedPF;
+      encodedPF.fill(reg, p);
+      ret->back().setEncodedPuppi64(encodedPF.pack().to_uint64());
+
       setRefs_(ret->back(), p);
     }
     for (const auto &p : event_.out[ir].pfneutral) {
@@ -1347,6 +1352,12 @@ std::unique_ptr<l1t::PFCandidateCollection> L1TCorrelatorLayer1Producer::fetchPF
       ret->back().setIdProbPu(p.idProbPu);
       ret->back().setIdProbEm(p.idProbEm);
       ret->back().setIdProbPi(p.idProbPi);
+
+      // encode the PF candidate with the 64b encoding used for PUPPI
+      l1ct::PuppiObj encodedPF;
+      encodedPF.fill(reg, p, p.hwPt, 1);
+      ret->back().setEncodedPuppi64(encodedPF.pack().to_uint64());
+
       setRefs_(ret->back(), p);
     }
   }
