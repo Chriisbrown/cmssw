@@ -30,7 +30,7 @@ process.load('Configuration.StandardSequences.Services_cff')
 process.load("SimGeneral.HepPDTESSource.pythiapdt_cfi")
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True), allowUnscheduled = cms.untracked.bool(False) )
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1008))
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100))
 process.MessageLogger.cerr.FwkReport.reportEvery = 1
 # process.MessageLogger.cerr.threshold = "DEBUG"
 # process.MessageLogger.debugModules = ["l1tLayer1BarrelTDR"]
@@ -58,6 +58,7 @@ process.GlobalTag = GlobalTag(process.GlobalTag, '141X_mcRun4_realistic_v3', '')
 process.load('L1Trigger.Phase2L1ParticleFlow.l1ctLayer1_cff')
 process.load('L1Trigger.Phase2L1ParticleFlow.l1ctLayer2EG_cff')
 process.load('L1Trigger.Phase2L1ParticleFlow.l1pfJetMet_cff')
+process.load('L1Trigger.Phase2L1ParticleFlow.mlAssociation_cfi')
 process.load('L1Trigger.L1TTrackMatch.l1tGTTInputProducer_cfi')
 process.load('L1Trigger.L1TTrackMatch.l1tTrackSelectionProducer_cfi')
 process.l1tTrackSelectionProducer.processSimulatedTracks = False # these would need stubs, and are not used anyway
@@ -305,11 +306,18 @@ if args.tm18:
         algorithm = 0,
         trkQualityPtMin = 10.)
     )
+    
+    process.l1tLayer1BarrelSerenityNNAssocTM18 = process.l1tLayer1BarrelSerenityEllipticTM18.clone()
+    associationPSset = process.NNVtxAssociationPSet.clone()
+    associationPSset.associationThreshold = cms.double(-1.0)
+    process.l1tLayer1BarrelSerenityNNAssocTM18.puAlgoParameters.useMLAssociation = True
+    process.l1tLayer1BarrelSerenityNNAssocTM18.puAlgoParameters.NNVtxAssociation = associationPSset
 
     process.runPF.insert(process.runPF.index(process.l1tLayer1HGCal)+1, process.l1tLayer1HGCalTM18)
     process.runPF.insert(process.runPF.index(process.l1tLayer1HGCalNoTK)+1, process.l1tLayer1HGCalNoTKTM18)
     process.runPF.insert(process.runPF.index(process.l1tLayer1BarrelSerenity)+1, process.l1tLayer1BarrelSerenityTM18)
     process.runPF.insert(process.runPF.index(process.l1tLayer1BarrelSerenity)+1, process.l1tLayer1BarrelSerenityEllipticTM18)
+    process.runPF.insert(process.runPF.index(process.l1tLayer1BarrelSerenity)+1, process.l1tLayer1BarrelSerenityNNAssocTM18)
     # FIXME: we need to schedule a new deregionizer for TM18
     process.runPF.insert(process.runPF.index(process.l1tLayer2EG)+1, process.l1tLayer2EGTM18)
     if not args.patternFilesOFF:
@@ -317,10 +325,11 @@ if args.tm18:
         process.l1tLayer1HGCalNoTKTM18.patternWriters = cms.untracked.VPSet(hgcalNoTKOutputTM18WriterConfig)
         process.l1tLayer1BarrelSerenityTM18.patternWriters = cms.untracked.VPSet(*barrelSerenityTM18WriterConfigs)
         process.l1tLayer1BarrelSerenityEllipticTM18.patternWriters = cms.untracked.VPSet(*barrelSerenityTM18WriterConfigs)
+        process.l1tLayer1BarrelSerenityNNAssocTM18.patternWriters = cms.untracked.VPSet(*barrelSerenityTM18WriterConfigs)
         process.l1tLayer2EGTM18.writeInPattern = True
         process.l1tLayer2EGTM18.writeOutPattern = True
     if not args.dumpFilesOFF:
-        for det in "HGCalTM18", "HGCalNoTKTM18", "BarrelSerenityTM18", "BarrelSerenityEllipticTM18":
+        for det in "HGCalTM18", "HGCalNoTKTM18", "BarrelSerenityTM18", "BarrelSerenityEllipticTM18", "BarrelSerenityNNAssocTM18":
                 getattr(process, 'l1tLayer1'+det).dumpFileName = cms.untracked.string("TTbar_PU200_"+det+".dump")
     if args.split18 and not args.patternFilesOFF:
         from FWCore.Modules.preScaler_cfi import preScaler
