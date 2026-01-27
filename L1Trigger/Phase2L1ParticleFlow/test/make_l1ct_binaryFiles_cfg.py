@@ -307,17 +307,17 @@ if args.tm18:
         trkQualityPtMin = 10.)
     )
     
-    process.l1tLayer1BarrelSerenityNNAssocTM18 = process.l1tLayer1BarrelSerenityEllipticTM18.clone()
+    process.l1tLayer1HGCalTM18NNAssoc = process.l1tLayer1HGCalTM18.clone()
     associationPSset = process.NNVtxAssociationPSet.clone()
     associationPSset.associationThreshold = cms.double(-1.0)
-    process.l1tLayer1BarrelSerenityNNAssocTM18.puAlgoParameters.useMLAssociation = True
-    process.l1tLayer1BarrelSerenityNNAssocTM18.puAlgoParameters.NNVtxAssociation = associationPSset
+    process.l1tLayer1HGCalTM18NNAssoc.puAlgoParameters.useMLAssociation = True
+    process.l1tLayer1HGCalTM18NNAssoc.puAlgoParameters.NNVtxAssociation = associationPSset
 
     process.runPF.insert(process.runPF.index(process.l1tLayer1HGCal)+1, process.l1tLayer1HGCalTM18)
     process.runPF.insert(process.runPF.index(process.l1tLayer1HGCalNoTK)+1, process.l1tLayer1HGCalNoTKTM18)
     process.runPF.insert(process.runPF.index(process.l1tLayer1BarrelSerenity)+1, process.l1tLayer1BarrelSerenityTM18)
     process.runPF.insert(process.runPF.index(process.l1tLayer1BarrelSerenity)+1, process.l1tLayer1BarrelSerenityEllipticTM18)
-    process.runPF.insert(process.runPF.index(process.l1tLayer1BarrelSerenity)+1, process.l1tLayer1BarrelSerenityNNAssocTM18)
+    process.runPF.insert(process.runPF.index(process.l1tLayer1HGCal)+1, process.l1tLayer1HGCalTM18NNAssoc)
     # FIXME: we need to schedule a new deregionizer for TM18
     process.runPF.insert(process.runPF.index(process.l1tLayer2EG)+1, process.l1tLayer2EGTM18)
     if not args.patternFilesOFF:
@@ -325,11 +325,11 @@ if args.tm18:
         process.l1tLayer1HGCalNoTKTM18.patternWriters = cms.untracked.VPSet(hgcalNoTKOutputTM18WriterConfig)
         process.l1tLayer1BarrelSerenityTM18.patternWriters = cms.untracked.VPSet(*barrelSerenityTM18WriterConfigs)
         process.l1tLayer1BarrelSerenityEllipticTM18.patternWriters = cms.untracked.VPSet(*barrelSerenityTM18WriterConfigs)
-        process.l1tLayer1BarrelSerenityNNAssocTM18.patternWriters = cms.untracked.VPSet(*barrelSerenityTM18WriterConfigs)
+        process.l1tLayer1HGCalTM18NNAssoc.patternWriters = cms.untracked.VPSet(*hgcalTM18WriterConfigs)
         process.l1tLayer2EGTM18.writeInPattern = True
         process.l1tLayer2EGTM18.writeOutPattern = True
     if not args.dumpFilesOFF:
-        for det in "HGCalTM18", "HGCalNoTKTM18", "BarrelSerenityTM18", "BarrelSerenityEllipticTM18", "BarrelSerenityNNAssocTM18":
+        for det in "HGCalTM18", "HGCalNoTKTM18", "BarrelSerenityTM18", "BarrelSerenityEllipticTM18", "HGCalTM18NNAssoc":
                 getattr(process, 'l1tLayer1'+det).dumpFileName = cms.untracked.string("TTbar_PU200_"+det+".dump")
     if args.split18 and not args.patternFilesOFF:
         from FWCore.Modules.preScaler_cfi import preScaler
@@ -344,6 +344,10 @@ if args.tm18:
                 hgcalWriterOutputTM18WriterConfig.clone(outputFileName = f"l1HGCalTM18-outputs-ts{tmSlice}"),
                 hgcalWriterVU9PTM18WriterConfig.clone(inputFileName = f"l1HGCalTM18-inputs-vu9p-ts{tmSlice}"),
                 hgcalWriterVU13PTM18WriterConfig.clone(inputFileName = f"l1HGCalTM18-inputs-vu13p-ts{tmSlice}")
+            )
+            getattr(process, f'l1tLayer1HGCalTM18NNAssocTS{tmSlice}').patternWriters = cms.untracked.VPSet(
+                hgcalWriterOutputTM18WriterConfig.clone(outputFileName = f"l1HGCalTM18NN-outputs-ts{tmSlice}"),
+                hgcalWriterVU13PTM18WriterConfig.clone(inputFileName = f"l1HGCalTM18NN-inputs-vu13p-ts{tmSlice}")
             )
             getattr(process, f'l1tLayer1HGCalNoTKTM18TS{tmSlice}').patternWriters = cms.untracked.VPSet(
                 hgcalNoTKOutputTM18WriterConfig.clone(outputFileName = f"l1HGCalTM18-outputs-ts{tmSlice}"),
