@@ -229,6 +229,7 @@ process.runPF = cms.Path(
         process.l1tLayer1BarrelSerenity +
         process.l1tLayer1BarrelSerenityElliptic +
         process.l1tLayer1HGCal +
+        process.l1tLayer1HGCalNNAssoc + 
         process.l1tLayer1HGCalElliptic +
         process.l1tLayer1HGCalNoTK +
         process.l1tLayer1HF +
@@ -266,9 +267,11 @@ if not args.patternFilesOFF:
     process.runPF.insert(process.runPF.index(process.l1tLayer2SeedConeJetWriter)+1, process.l1tLayer2SeedConeNGJetWriter)
     process.l1tLayer2SeedConeNGJetWriter.maxLinesPerFile = _eventsPerFile*54
 if not args.dumpFilesOFF:
-    for det in "Barrel", "BarrelTDR", "BarrelSerenity", "BarrelSerenityElliptic", "HGCal", "HGCalElliptic", "HGCalNoTK", "HF","HGCalNNAssoc":
+    for det in ["HGCalNNAssoc"]:
+        print('l1tLayer1'+det)
         l1pf = getattr(process, 'l1tLayer1'+det)
         l1pf.dumpFileName = cms.untracked.string("TTbar_PU200_"+det+".dump")
+        print(l1pf.dumpFileName)
     for det in "Barrel", "HGCal":
         l1pf = getattr(process, 'l1tLayer1'+det+'Extended')
         l1pf.dumpFileName = cms.untracked.string("TTbar_PU200_"+det+"Extended.dump")
